@@ -112,6 +112,12 @@ const App: React.FC = () => {
           console.warn("Erro ao inicializar auth:", e);
         }
       }
+
+      // 5. Iniciar sincronização de pendentes se houver internet
+      if (navigator.onLine) {
+        syncPendingRecords();
+      }
+
       setLoading(false);
     };
 
@@ -315,6 +321,70 @@ const App: React.FC = () => {
     } catch (e) { console.warn("Sincronização offline."); }
   };
 
+  const syncPendingRecords = async () => {
+    if (!navigator.onLine || !isSupabaseConfigured || !supabase) return;
+
+    const cached = localStorage.getItem('lkm_incidents_cache');
+    if (!cached) return;
+
+    const currentIncidents: Incident[] = JSON.parse(cached);
+    const pending = currentIncidents.filter(i => i.isPendingSync);
+
+    if (pending.length === 0) return;
+
+    console.log(`🔄 [SYNC] Tentando sincronizar ${pending.length} registros pendentes...`);
+    let syncedIds: string[] = [];
+
+    for (const item of pending) {
+      try {
+        // Tenta salvar no Supabase
+        const { error } = await supabase.from('incidents').insert({
+          id: item.id,
+          student_name: item.studentName,
+          ra: item.ra,
+          class_room: item.classRoom,
+          professor_name: item.professorName,
+          discipline: item.discipline,
+          date: item.date,
+          time: item.time,
+          register_date: item.registerDate,
+          return_date: item.returnDate,
+          description: item.description,
+          irregularities: item.irregularities,
+          category: item.category,
+          severity: item.severity,
+          status: item.status,
+          source: item.source,
+          pdf_url: item.pdfUrl,
+          author_email: item.authorEmail
+        });
+
+        if (!error) {
+          syncedIds.push(item.id);
+          // Tenta salvar no Google Sheets também
+          try { await saveToGoogleSheets(item); } catch (e) { console.warn("Erro ao sincronizar com Sheets durante background sync"); }
+        }
+      } catch (e) {
+        console.error("Erro na sincronização de fundo:", e);
+      }
+    }
+
+    if (syncedIds.length > 0) {
+      const updatedList = currentIncidents.map(inc =>
+        syncedIds.includes(inc.id) ? { ...inc, isPendingSync: false } : inc
+      );
+      setIncidents(updatedList);
+      localStorage.setItem('lkm_incidents_cache', JSON.stringify(updatedList));
+      console.log(`✅ [SYNC] ${syncedIds.length} registros sincronizados com sucesso.`);
+    }
+  };
+
+  // Listener para voltar a ficar online
+  useEffect(() => {
+    window.addEventListener('online', syncPendingRecords);
+    return () => window.removeEventListener('online', syncPendingRecords);
+  }, []);
+
   const handleSaveIncident = async (newIncident: Incident | Incident[]) => {
     if (!user) return;
     const items = (Array.isArray(newIncident) ? newIncident : [newIncident]).map(i => ({
@@ -380,11 +450,18 @@ const App: React.FC = () => {
       } catch (err) {
         console.error("❌ [ERROR] Falha na persistência:", err);
         hasError = true;
+        // Marcar individualmente como pendente no cache se falhar
+        const currentCache = JSON.parse(localStorage.getItem('lkm_incidents_cache') || '[]');
+        const updatedCache = currentCache.map((inc: Incident) =>
+          inc.id === item.id ? { ...inc, isPendingSync: true } : inc
+        );
+        setIncidents(updatedCache);
+        localStorage.setItem('lkm_incidents_cache', JSON.stringify(updatedCache));
       }
     }
 
     if (hasError) {
-      alert("⚠️ ALERTA: Alguns registros foram salvos localmente, mas podem não ter sido sincronizados com o servidor. Verifique sua conexão.");
+      alert("⚠️ REGISTRO SALVO LOCALMENTE: No momento não há conexão estável. Seu registro foi guardado e será enviado automaticamente para a plataforma assim que a internet voltar.");
     }
   };
 
