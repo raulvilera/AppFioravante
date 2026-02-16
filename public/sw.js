@@ -13,14 +13,9 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('SW: Cache aberto');
-            // Usamos addAll mas com tratamento de erro individual para não quebrar a instalação
-            return Promise.allSettled(
-                ASSETS_TO_CACHE.map(asset => cache.add(asset))
-            ).then(results => {
-                const failed = results.filter(r => r.status === 'rejected');
-                if (failed.length > 0) {
-                    console.warn(`SW: ${failed.length} recursos falharam ao carregar no cache.`);
-                }
+            // Tentamos cachear os essenciais, mas permitimos continuar mesmo com falha
+            return cache.addAll(['/', '/index.html', '/manifest.json']).catch(() => {
+                console.warn('SW: Cache inicial falhou, mas continuando instalação...');
             });
         })
     );
