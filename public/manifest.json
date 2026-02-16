@@ -3,14 +3,19 @@
     "name": "Gestão de Ocorrências 2026",
     "short_name": "LKM Gestão",
     "description": "Sistema de Gestão de Ocorrências Escolar - LKM",
-    "start_url": "/?pwa=true",
+    "start_url": "/?utm_source=pwa",
     "scope": "/",
     "display": "standalone",
+    "display_override": [
+        "standalone",
+        "window-controls-overlay"
+    ],
     "background_color": "#001a35",
     "theme_color": "#002b5c",
     "orientation": "portrait-primary",
     "dir": "ltr",
     "lang": "pt-BR",
+    "prefer_related_applications": false,
     "categories": [
         "education",
         "productivity"
@@ -31,6 +36,12 @@
         {
             "src": "/pwa-192x192.png",
             "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/pwa-512x512.png",
+            "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
         }
