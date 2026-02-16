@@ -33,6 +33,7 @@ export interface Incident {
   authorEmail?: string; // E-mail do autor do registro para controle de exclusão
   managementFeedback?: string;
   lastViewedAt?: string;
+  isPendingSync?: boolean; // Indica se o registro ainda não foi salvo no servidor
 }
 
 export type View = 'login' | 'dashboard';

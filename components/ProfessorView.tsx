@@ -379,6 +379,12 @@ const ProfessorView: React.FC<ProfessorViewProps> = ({ user, incidents, students
                     <td className="p-4">
                       <div className="flex flex-col gap-1">
                         <StatusBadge status={inc.status} size="small" />
+                        {inc.isPendingSync && (
+                          <span className="flex items-center gap-1 text-[7px] font-black text-orange-500 uppercase tracking-tighter animate-pulse">
+                            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+                            Aguardando Conexão
+                          </span>
+                        )}
                         {inc.lastViewedAt && (
                           <span className="text-[7px] font-black text-teal-600 uppercase tracking-tighter">Visualizado pela Gestão</span>
                         )}
@@ -534,6 +540,12 @@ const ProfessorView: React.FC<ProfessorViewProps> = ({ user, incidents, students
                                 <div className="flex items-center gap-3">
                                   <span className="text-[10px] font-black text-gray-500">{inc.date}</span>
                                   <StatusBadge status={inc.status} size="small" />
+                                  {inc.isPendingSync && (
+                                    <span className="flex items-center gap-1 text-[7px] font-black text-orange-500 uppercase tracking-tighter animate-pulse">
+                                      <span className="w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+                                      Pendente
+                                    </span>
+                                  )}
                                 </div>
                                 <span className="px-3 py-1 bg-gray-100 rounded-lg text-[8px] font-black text-gray-500 uppercase">{inc.category}</span>
                               </div>
