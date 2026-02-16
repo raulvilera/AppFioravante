@@ -1,9 +1,9 @@
 {
     "id": "/",
-    "name": "Gestão de Ocorrências LKM",
+    "name": "Gestão de Ocorrências 2026",
     "short_name": "LKM Gestão",
-    "description": "Plataforma de Gestão de Ocorrências e Controle Escolar",
-    "start_url": "/",
+    "description": "Sistema de Gestão de Ocorrências Escolar - LKM",
+    "start_url": "/?pwa=true",
     "scope": "/",
     "display": "standalone",
     "background_color": "#001a35",
