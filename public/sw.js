@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lkm-gestao-v6';
+const CACHE_NAME = 'lkm-gestao-v7';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -8,23 +8,24 @@ const ASSETS_TO_CACHE = [
     '/pwa-512x512.png'
 ];
 
-// Instalação do Service Worker
-self.addEventListener('install', (event) => {
+// Instalação: Cachear arquivos essenciais
+self.addEventListener('install', function (event) {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
+        caches.open(CACHE_NAME).then(function (cache) {
             return cache.addAll(ASSETS_TO_CACHE);
         })
     );
     self.skipWaiting();
 });
 
-// Ativação e limpeza
-self.addEventListener('activate', (event) => {
+// Ativação: Limpar caches antigos (Sem usar Promise.allSettled)
+self.addEventListener('activate', function (event) {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
+        caches.keys().then(function (cacheNames) {
+            var cacheWhitelist = [CACHE_NAME];
             return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
+                cacheNames.map(function (cacheName) {
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
                         return caches.delete(cacheName);
                     }
                 })
@@ -34,11 +35,14 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
-// Estratégia Cache-First com Fallback de Rede
-self.addEventListener('fetch', (event) => {
+// Fetch: Strategy Cache-First com Fallback de Rede
+self.addEventListener('fetch', function (event) {
     event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
+        caches.match(event.request).then(function (response) {
+            if (response) {
+                return response;
+            }
+            return fetch(event.request);
         })
     );
 });
