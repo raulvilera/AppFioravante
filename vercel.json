@@ -1,7 +1,31 @@
 {
+    "headers": [
+        {
+            "source": "/manifest.json",
+            "headers": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/manifest+json"
+                }
+            ]
+        },
+        {
+            "source": "/sw.js",
+            "headers": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/javascript"
+                },
+                {
+                    "key": "Service-Worker-Allowed",
+                    "value": "/"
+                }
+            ]
+        }
+    ],
     "rewrites": [
         {
-            "source": "/((?!.*\\.(?:js|css|json|html|png|jpg|jpeg|svg|ico)$|api/).*)",
+            "source": "/((?!manifest\\.json|sw\\.js|pwa-.*\\.png|assets/.*|index\\.css|_redirects).*)",
             "destination": "/index.html"
         }
     ]
