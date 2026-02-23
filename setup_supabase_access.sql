@@ -1,0 +1,77 @@
+-- ============================================================
+-- SCRIPT DE CONFIGURAÇÃO DE ACESSO - PLATAFORMA LYDIA KITZ
+-- Execute este script no SQL Editor do seu painel Supabase
+-- ============================================================
+
+-- 1. GARANTIR QUE A TABELA DE PROFESSORES AUTORIZADOS EXISTE
+CREATE TABLE IF NOT EXISTS public.authorized_professors (
+    email TEXT PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. HABILITAR RLS NA TABELA
+ALTER TABLE public.authorized_professors ENABLE ROW LEVEL SECURITY;
+
+-- 3. ADICIONAR E-MAILS DE GESTÃO E PROFESSORES À LISTA DE AUTORIZADOS
+INSERT INTO public.authorized_professors (email) 
+VALUES 
+  ('gestao@escola.com'),
+  ('cadastroslkm@gmail.com'),
+  ('vilera@prof.educacao.sp.gov.br'),
+  ('alinecardoso1@prof.educacao.sp.gov.br'),
+  ('alinecardoso1@professor.educacao.sp.gov.br'),
+  ('aline.gestao@prof.educacao.sp.gov.br')
+ON CONFLICT (email) DO NOTHING;
+
+-- 4. ATUALIZAR POLÍTICAS DE ACESSO (RLS) PARA GESTORES
+-- Estas políticas garantem que os e-mails acima tenham acesso total às tabelas críticas
+
+-- POLÍTICA PARA A TABELA 'incidents'
+DROP POLICY IF EXISTS "Allow write access for managers" ON incidents;
+DROP POLICY IF EXISTS "Managers can do everything" ON incidents;
+
+CREATE POLICY "Managers can do everything"
+  ON incidents FOR ALL
+  TO authenticated
+  USING (
+    auth.jwt() ->> 'email' IN (
+      'gestao@escola.com',
+      'cadastroslkm@gmail.com',
+      'vilera@prof.educacao.sp.gov.br',
+      'alinecardoso1@prof.educacao.sp.gov.br',
+      'alinecardoso1@professor.educacao.sp.gov.br',
+      'aline.gestao@prof.educacao.sp.gov.br'
+    )
+  )
+  WITH CHECK (
+    auth.jwt() ->> 'email' IN (
+      'gestao@escola.com',
+      'cadastroslkm@gmail.com',
+      'vilera@prof.educacao.sp.gov.br',
+      'alinecardoso1@prof.educacao.sp.gov.br',
+      'alinecardoso1@professor.educacao.sp.gov.br',
+      'aline.gestao@prof.educacao.sp.gov.br'
+    )
+  );
+
+-- POLÍTICA PARA A TABELA 'students'
+DROP POLICY IF EXISTS "Allow write access for managers" ON students;
+DROP POLICY IF EXISTS "Managers can manage students" ON students;
+
+CREATE POLICY "Managers can manage students"
+  ON students FOR ALL
+  TO authenticated
+  USING (
+    auth.jwt() ->> 'email' IN (
+      'gestao@escola.com',
+      'cadastroslkm@gmail.com',
+      'vilera@prof.educacao.sp.gov.br',
+      'alinecardoso1@prof.educacao.sp.gov.br',
+      'alinecardoso1@professor.educacao.sp.gov.br',
+      'aline.gestao@prof.educacao.sp.gov.br'
+    )
+  );
+
+-- 5. VERIFICAÇÃO FINAL
+SELECT 'ACESSO CONFIGURADO PARA:' as status, email 
+FROM authorized_professors;

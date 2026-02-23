@@ -29,9 +29,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   }, []);
 
   // Mapeamento de aliases de e-mail para contas reais
-  // gestao@escola.com é um alias que redireciona para vilera@prof.educacao.sp.gov.br
   const EMAIL_ALIASES: Record<string, string> = {
-    'gestao@escola.com': 'vilera@prof.educacao.sp.gov.br',
     'alinecardoso1@prof.educacao.sp.gov.br': 'aline.gestao@prof.educacao.sp.gov.br',
     'alinecardoso1@professor.educacao.sp.gov.br': 'aline.gestao@prof.educacao.sp.gov.br'
   };
