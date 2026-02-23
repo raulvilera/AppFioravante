@@ -234,6 +234,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, incidents, students, classe
     const classCount: Record<string, number> = {};
     const studentCount: Record<string, { count: number, turma: string }> = {};
     const typeCount: Record<string, number> = {};
+    const profCount: Record<string, number> = {};
+    const managerCount: Record<string, number> = {};
 
     incidents.forEach(inc => {
       // Top Turmas
@@ -253,6 +255,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, incidents, students, classe
       if (inc.category) {
         typeCount[inc.category] = (typeCount[inc.category] || 0) + 1;
       }
+
+      // Top Professores (Apenas registros de professores)
+      if (inc.source === 'professor' && inc.professorName) {
+        profCount[inc.professorName] = (profCount[inc.professorName] || 0) + 1;
+      }
+
+      // Top Gestores (Apenas registros de gestão)
+      if (inc.source === 'gestao' && inc.professorName) {
+        managerCount[inc.professorName] = (managerCount[inc.professorName] || 0) + 1;
+      }
     });
 
     const topClasses = Object.entries(classCount)
@@ -266,7 +278,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, incidents, students, classe
     const topTypes = Object.entries(typeCount)
       .sort((a, b) => b[1] - a[1]);
 
-    return { topClasses, topStudents, topTypes };
+    const topProfs = Object.entries(profCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    const topManagers = Object.entries(managerCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    return { topClasses, topStudents, topTypes, topProfs, topManagers };
   }, [incidents]);
 
   const pedagogicalGuide = {
@@ -642,6 +662,61 @@ const Dashboard: React.FC<DashboardProps> = ({ user, incidents, students, classe
                     </div>
                   )) : (
                     <p className="text-center text-gray-300 font-bold uppercase text-[10px] py-10">Nenhum dado cadastrado</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Segunda Linha de Estatísticas: Professores e Gestores */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Card Top Professores */}
+              <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col">
+                <div className="bg-[#002b5c] p-6 text-center border-b-4 border-teal-400">
+                  <h3 className="text-white font-black text-xs uppercase tracking-widest">👨‍🏫 Professores: Maior Volume</h3>
+                </div>
+                <div className="p-8 flex-1 flex flex-col gap-4">
+                  {stats.topProfs.length > 0 ? stats.topProfs.map(([nome, count], idx) => (
+                    <div key={nome} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border-l-8 border-teal-400">
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-black text-[#002b5c] border-b border-gray-100 pb-1">{idx + 1}º - {nome}</span>
+                        <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">Registros de Aula</span>
+                      </div>
+                      <div className="flex flex-col items-center bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
+                        <span className="text-teal-600 font-black text-[14px] leading-tight">{count}</span>
+                        <span className="text-[7px] font-black text-gray-400 uppercase">Ocorrências</span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="flex flex-col items-center justify-center py-10 opacity-30">
+                      <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                      <p className="text-center text-gray-500 font-bold uppercase text-[9px] tracking-widest">Nenhum registro de professor</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Card Top Gestores */}
+              <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden border border-white/10 flex flex-col">
+                <div className="bg-[#002b5c] p-6 text-center border-b-4 border-orange-400">
+                  <h3 className="text-white font-black text-xs uppercase tracking-widest">💼 Gestores: Maior Volume</h3>
+                </div>
+                <div className="p-8 flex-1 flex flex-col gap-4">
+                  {stats.topManagers.length > 0 ? stats.topManagers.map(([nome, count], idx) => (
+                    <div key={nome} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border-l-8 border-orange-400">
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-black text-[#002b5c] border-b border-gray-100 pb-1">{idx + 1}º - {nome}</span>
+                        <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">Registros Administrativos</span>
+                      </div>
+                      <div className="flex flex-col items-center bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
+                        <span className="text-orange-600 font-black text-[14px] leading-tight">{count}</span>
+                        <span className="text-[7px] font-black text-gray-400 uppercase">Ocorrências</span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="flex flex-col items-center justify-center py-10 opacity-30">
+                      <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                      <p className="text-center text-gray-500 font-bold uppercase text-[9px] tracking-widest">Nenhum registro de gestão</p>
+                    </div>
                   )}
                 </div>
               </div>
