@@ -656,7 +656,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, incidents, students, classe
                       <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
                         <div
                           className="bg-blue-500 h-full"
-                          style={{ width: `${(count / incidents.length) * 100}%` }}
+                          style={{ width: `${incidents.length > 0 ? Math.min(100, (count / incidents.length) * 100) : 0}%` }}
                         ></div>
                       </div>
                     </div>

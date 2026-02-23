@@ -146,10 +146,15 @@ const App: React.FC = () => {
       setLoading(false);
     };
 
+    const failsafeTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 8000); // 8 segundos para evitar travamento infinito no spinner
+
     initApp();
 
     return () => {
       if (authListener) authListener.unsubscribe();
+      clearTimeout(failsafeTimeout);
     };
   }, []); // Sem dependência de [view] para evitar loop
 
@@ -215,8 +220,9 @@ const App: React.FC = () => {
             finalStudents = sheetsStudents;
             console.log(`✅ Google Sheets: Carregados ${sheetsStudents.length} alunos`);
 
-            // Sincronizar com Supabase se houver conexão
-            if (isSupabaseConfigured && supabase) {
+            // Sincronizar com Supabase se houver conexão E usuário logado (para evitar erro de RLS)
+            const { data: { session } } = await supabase.auth.getSession();
+            if (isSupabaseConfigured && supabase && session) {
               try {
                 // Limpar tabela students para evitar duplicatas (usando filtro 'neq' em campo garantido ou delete all se RLS permitir)
                 // Nota: No Supabase, delete sem filtro pode ser bloqueado dependendo da config.
