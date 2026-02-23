@@ -15,7 +15,8 @@ import { isProfessorRegistered } from './professorsData';
 const MANAGEMENT_EMAILS = [
   'gestao@escola.com',
   'cadastroslkm@gmail.com',
-  'vilera@prof.educacao.sp.gov.br'
+  'vilera@prof.educacao.sp.gov.br',
+  'alinecardoso1@prof.educacao.sp.gov.br'
 ];
 
 // E-mail com acesso dual (gestor + professor)
