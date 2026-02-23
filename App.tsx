@@ -353,7 +353,8 @@ const App: React.FC = () => {
   };
 
   const syncPendingRecords = async () => {
-    if (!navigator.onLine || !isSupabaseConfigured || !supabase) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!navigator.onLine || !isSupabaseConfigured || !supabase || !session) return;
 
     const cached = localStorage.getItem('lkm_incidents_cache');
     if (!cached) return;
