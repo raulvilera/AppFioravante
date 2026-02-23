@@ -24,7 +24,7 @@ const MANAGEMENT_EMAILS = [
 // E-mail com acesso dual (gestor + professor)
 const DUAL_ACCESS_EMAIL = 'vilera@prof.educacao.sp.gov.br';
 
-type View = 'login' | 'dashboard' | 'resetPassword';
+type View = 'login' | 'dashboard' | 'resetPassword' | 'unauthorized';
 type ViewMode = 'gestor' | 'professor';
 
 const App: React.FC = () => {
@@ -85,12 +85,8 @@ const App: React.FC = () => {
                   setView('dashboard');
                 } else {
                   console.warn('⚠️ [APP] Usuário não autorizado:', email);
-                  // Pequeno delay para evitar loop de estado
-                  setTimeout(async () => {
-                    await supabase.auth.signOut();
-                    setUser(null);
-                    setView('login');
-                  }, 500);
+                  setUser({ email, role: 'professor' }); // Seta um user temporário para evitar loop
+                  setView('unauthorized');
                 }
               }
             } else if (event === 'SIGNED_OUT') {
@@ -111,6 +107,9 @@ const App: React.FC = () => {
                 const role = MANAGEMENT_EMAILS.includes(email) ? 'gestor' : 'professor';
                 setUser({ email, role });
                 setView('dashboard');
+              } else {
+                setUser({ email, role: 'professor' });
+                setView('unauthorized');
               }
             }
           }
@@ -628,7 +627,15 @@ const App: React.FC = () => {
         </button>
       )}
 
-      {shouldShowGestorView ? <Dashboard {...commonProps} /> : <ProfessorView {...commonProps} />}
+      {shouldShowGestorView ? <Dashboard {...commonProps} /> : (view === 'unauthorized' ? (
+        <div className="h-screen w-full flex flex-col items-center justify-center text-white p-6 text-center">
+          <h1 className="text-2xl font-black mb-4 uppercase">Acesso Não Autorizado</h1>
+          <p className="text-gray-400 mb-8 max-w-md uppercase text-[10px] tracking-widest leading-loose">
+            Seu e-mail ({user?.email}) está autenticado, mas não consta na lista de professores autorizados da EE Lydia Kitz Moreira.
+          </p>
+          <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full font-black text-xs uppercase transition-all"> Sair da Conta </button>
+        </div>
+      ) : <ProfessorView {...commonProps} />)}
     </div>
   );
 };
