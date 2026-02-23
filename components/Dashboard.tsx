@@ -647,20 +647,29 @@ const Dashboard: React.FC<DashboardProps> = ({ user, incidents, students, classe
                   <h3 className="text-white font-black text-xs uppercase tracking-widest">📝 Tipos mais Comuns</h3>
                 </div>
                 <div className="p-8 flex-1 flex flex-col gap-4">
-                  {stats.topTypes.length > 0 ? stats.topTypes.map(([type, count]) => (
-                    <div key={type} className="flex flex-col gap-2 p-4 bg-gray-50 rounded-2xl">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px] font-black text-[#002b5c] uppercase">{type}</span>
-                        <span className="text-[10px] font-black text-blue-600">{count} unidades</span>
+                  {stats.topTypes.length > 0 ? stats.topTypes.map(([type, count]) => {
+                    const barColor = type.includes('DISCIPLINAR') ? 'bg-red-500' :
+                      type.includes('PEDAGÓGICA') ? 'bg-blue-500' :
+                        'bg-teal-500';
+                    const textColor = type.includes('DISCIPLINAR') ? 'text-red-600' :
+                      type.includes('PEDAGÓGICA') ? 'text-blue-600' :
+                        'text-teal-600';
+
+                    return (
+                      <div key={type} className="flex flex-col gap-2 p-4 bg-gray-50 rounded-2xl">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] font-black text-[#002b5c] uppercase">{type}</span>
+                          <span className={`text-[10px] font-black ${textColor}`}>{count} unidades</span>
+                        </div>
+                        <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`${barColor} h-full transition-all duration-1000`}
+                            style={{ width: `${incidents.length > 0 ? Math.min(100, (count / incidents.length) * 100) : 0}%` }}
+                          ></div>
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                        <div
-                          className="bg-blue-500 h-full"
-                          style={{ width: `${incidents.length > 0 ? Math.min(100, (count / incidents.length) * 100) : 0}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )) : (
+                    );
+                  }) : (
                     <p className="text-center text-gray-300 font-bold uppercase text-[10px] py-10">Nenhum dado cadastrado</p>
                   )}
                 </div>
