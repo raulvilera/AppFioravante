@@ -34,6 +34,8 @@ VALUES
   ('alinecardoso1@prof.educacao.sp.gov.br', 'ALINE CARDOSO - GESTÃO', 'gestor'),
   ('alinecardoso1@professor.educacao.sp.gov.br', 'ALINE CARDOSO - GESTÃO', 'gestor'),
   ('aline.gestao@prof.educacao.sp.gov.br', 'ALINE CARDOSO - GESTÃO', 'gestor'),
+  ('deizylaura@prof.educacao.sp.gov.br', 'DEIZY LAURA - GESTÃO', 'gestor'),
+  ('anderson.ikawa@servidor.educacao.sp.gov.br', 'ANDERSON IKAWA - GESTÃO', 'gestor'),
   
   -- Abaixo a lista de todos os professores (amostra inicial, o usuário pode adicionar os demais se preferir, ou importar via CSV)
   -- Mas para garantir paridade com PROFESSORS_DB local:

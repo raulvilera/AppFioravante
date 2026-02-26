@@ -55,7 +55,7 @@ const App: React.FC = () => {
             const query = supabase
               .from('authorized_professors')
               .select('role')
-              .or(`email.eq.${emailBase}@prof.educacao.sp.gov.br,email.eq.${emailBase}@professor.educacao.sp.gov.br`)
+              .or(`email.eq.${email},email.eq.${emailBase}@prof.educacao.sp.gov.br,email.eq.${emailBase}@professor.educacao.sp.gov.br`)
               .maybeSingle();
 
             const timeoutPromise = new Promise((_, reject) =>

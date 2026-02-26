@@ -12,7 +12,9 @@ BEGIN
         VALUES 
           ('alinecardoso1@prof.educacao.sp.gov.br'),
           ('alinecardoso1@professor.educacao.sp.gov.br'),
-          ('aline.gestao@prof.educacao.sp.gov.br')
+          ('aline.gestao@prof.educacao.sp.gov.br'),
+          ('deizylaura@prof.educacao.sp.gov.br'),
+          ('anderson.ikawa@servidor.educacao.sp.gov.br')
         ON CONFLICT (email) DO NOTHING;
     END IF;
 END $$;

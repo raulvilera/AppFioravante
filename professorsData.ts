@@ -14,6 +14,8 @@ export const PROFESSORS_DB: ProfessorData[] = [
     { email: 'alinecardoso1@prof.educacao.sp.gov.br', nome: 'ALINE CARDOSO - GESTÃO' },
     { email: 'alinecardoso1@professor.educacao.sp.gov.br', nome: 'ALINE CARDOSO - GESTÃO' },
     { email: 'aline.gestao@prof.educacao.sp.gov.br', nome: 'ALINE CARDOSO - GESTÃO' },
+    { email: 'deizylaura@prof.educacao.sp.gov.br', nome: 'DEIZY LAURA - GESTÃO' },
+    { email: 'anderson.ikawa@servidor.educacao.sp.gov.br', nome: 'ANDERSON IKAWA - GESTÃO' },
 
     // Lista Completa Baseada na Imagem Oficial
     { email: 'luth@professor.educacao.sp.gov.br', nome: 'ALEX LUTH PEREIRA MARANHÃO' },
