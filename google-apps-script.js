@@ -29,10 +29,10 @@ var SPREADSHEET_ID = '1u7qMsMHkZT47OZdar5qvshQDRA8XJrLgDjAZVOViAio';
 var DEFAULT_SHEET = 'BANCODEDADOSGERAL';
 
 // Quantas linhas iniciais verificar procurando o cabeçalho de turmas
-var MAX_HEADER_SCAN_ROWS = 15;
+var MAX_HEADER_SCAN_ROWS = 30;
 
 // Quantas colunas à frente de cada turma verificar para encontrar "RA"
-var MAX_RA_SCAN_COLS = 10;
+var MAX_RA_SCAN_COLS = 15;
 
 
 // ─── UTILITÁRIOS ────────────────────────────────────────────
@@ -42,12 +42,13 @@ var MAX_RA_SCAN_COLS = 10;
  * Retorna MAIÚSCULO sem acentos para comparação uniforme.
  */
 function normalizeStr(val) {
+    if (val === null || val === undefined) return '';
     return String(val)
         .trim()
         .toUpperCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')   // Remove acentos
-        .replace(/[º°ª]/g, '')             // Remove ordinais
+        .replace(/[º°ª.]/g, '')            // Remove ordinais e pontos
         .replace(/\s+/g, ' ')
         .trim();
 }
@@ -65,10 +66,11 @@ function isClassHeader(val) {
 
     var s = normalizeStr(raw);
 
+    // Regex mais abrangente para capturar turmas como "7ANO E", "1SERIE A", "7A", etc.
     return (
-        /\d\s*(ANO|SERIE)\s*[A-Z]?$/.test(s) ||   // "7 ANO A", "6 SERIE B", "9ANO"
-        /^(ANO|SERIE)\s*\d/.test(s) ||              // "ANO 7", "SERIE 6"
-        /^\d\s*[A-F]\s*$/.test(s)                   // "7A", "8 B" (apenas letra de turma)
+        /\d+\s*(ANO|SERIE|EM)/i.test(s) ||   // "7 ANO A", "6 SERIE B", "1 EM A"
+        /^(ANO|SERIE|EM)\s*\d+/i.test(s) || // "ANO 7", "SERIE 6"
+        /^\d+\s*[A-Z](\s|$)/i.test(s)        // "7A", "8 B"
     );
 }
 
