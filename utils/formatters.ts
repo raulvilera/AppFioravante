@@ -25,7 +25,7 @@ export const normalizeClassName = (raw: string): string => {
         .trim();
 
     // Regex robusta: captura número, tipo e letra
-    const match = s.match(/^(\d+)\s*(ANO|SERIE|EM)?\s*([A-H])?$/);
+    const match = s.match(/^(\d+)\s*(ANO|SERIE|EM)?\s*([A-Z])?$/);
 
     if (match) {
         const num = match[1];
@@ -33,12 +33,12 @@ export const normalizeClassName = (raw: string): string => {
         if (type === 'EM') type = 'SERIE';
         const letter = match[3] || '';
 
-        // Regra: 1-3 SERIE -> Xª Série Y
+        // Regra: 1-3 SERIE -> Xª SÉRIE Y
         if (num === '1' || num === '2' || num === '3') {
-            return `${num}ª Série ${letter}`.trim();
+            return `${num}ª SÉRIE ${letter}`.trim().toUpperCase();
         }
-        // Regra: 6-9 ANO -> XºAno Y
-        return `${num}ºAno ${letter}`.trim();
+        // Regra: 6-9 ANO -> XºANO Y
+        return `${num}ºANO ${letter}`.trim().toUpperCase();
     }
 
     // Fallback: Retorna o original limpo

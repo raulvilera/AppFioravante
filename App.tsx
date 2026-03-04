@@ -260,13 +260,18 @@ const App = () => {
         console.log(`⚠️ Local: Usando ${STUDENTS_DB.length} alunos (studentsData.ts)`);
       } else {
         // Mescla alunos do banco local para turmas que não vieram do Supabase/Sheets
-        const turmasCarregadas = new Set(finalStudents.map(s => s.turma));
-        const alunosFaltando = STUDENTS_DB.filter(s => !turmasCarregadas.has(s.turma));
+        // Normaliza as turmas carregadas para comparação robusta
+        const turmasCarregadas = new Set(finalStudents.map(s => normalizeClassName(s.turma)));
+        const alunosFaltando = STUDENTS_DB.filter(s => !turmasCarregadas.has(normalizeClassName(s.turma)));
         if (alunosFaltando.length > 0) {
           console.log(`⚠️ Mesclando ${alunosFaltando.length} alunos de turmas faltantes do banco local`);
-          finalStudents = [...finalStudents, ...alunosFaltando];
+          // Adiciona os alunos faltando com a turma já normalizada
+          finalStudents = [...finalStudents, ...alunosFaltando.map(s => ({ ...s, turma: normalizeClassName(s.turma) }))];
         }
       }
+
+      // Garante que TODOS os estudantes na lista final tenham a turma normalizada
+      finalStudents = finalStudents.map(s => ({ ...s, turma: normalizeClassName(s.turma) }));
 
       setStudents(finalStudents);
 
