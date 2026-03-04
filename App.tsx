@@ -686,6 +686,11 @@ const App = () => {
           <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full font-black text-xs uppercase transition-all"> Sair da Conta </button>
         </div>
       ) : <ProfessorView {...commonProps} />)}
+
+      {/* Marcador de Versão para Depuração */}
+      <div className="fixed bottom-2 left-2 text-[8px] font-black text-gray-500/30 uppercase pointer-events-none select-none z-[100]">
+        Build Version: 1.15.2
+      </div>
     </div>
   );
 };

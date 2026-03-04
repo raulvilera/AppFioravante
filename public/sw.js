@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lkm-gestao-v11';
+const CACHE_NAME = 'lkm-gestao-v15';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
