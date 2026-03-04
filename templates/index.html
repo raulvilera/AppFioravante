@@ -16,6 +16,26 @@
       box-sizing: border-box
     }
 
+    /* scrollbar customizada azul */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 119, 255, 0.5);
+      border-radius: 4px;
+      border: 2px solid #02060a
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 204, 255, 0.8)
+    }
+
     :root {
       --g: #0077ff;
       --gb: #00ccff;
@@ -262,7 +282,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      background: radial-gradient(ellipse at 25% 15%, rgba(0, 80, 20, 0.05) 0%, transparent 50%), #070d07
+      background: radial-gradient(ellipse at 70% 10%, rgba(0, 120, 255, 0.05) 0%, transparent 50%), var(--bg)
     }
 
     .topbar {
@@ -413,7 +433,8 @@
     .content {
       flex: 1;
       padding: 18px 20px;
-      overflow-y: auto
+      overflow-y: auto;
+      overflow-x: hidden
     }
 
     .page-hdr {
