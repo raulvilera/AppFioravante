@@ -366,9 +366,10 @@ const ProfessorView: React.FC<ProfessorViewProps> = ({ user, incidents, students
                   <th className="p-4">Status</th>
                   <th className="p-4">Aluno</th>
                   <th className="p-4">Turma</th>
+                  <th className="p-4 text-center">Documento</th>
+                  <th className="p-4">Tipo</th>
                   <th className="p-4">Responsável</th>
                   <th className="p-4">Descrição</th>
-                  <th className="p-4 text-center">Documento</th>
                   <th className="p-4 text-center">Ação</th>
                 </tr>
               </thead>
@@ -392,22 +393,6 @@ const ProfessorView: React.FC<ProfessorViewProps> = ({ user, incidents, students
                     </td>
                     <td className="p-4"><span className="font-black text-blue-900 uppercase">{inc.studentName}</span></td>
                     <td className="p-4 font-black text-blue-600">{inc.classRoom}</td>
-                    <td className="p-4 uppercase font-bold text-gray-400">{inc.professorName}</td>
-                    <td className="p-4 max-w-xs text-gray-500 italic">
-                      <div className="truncate">{inc.description}</div>
-                      {inc.managementFeedback && (
-                        <div className={`mt-2 p-3 rounded-lg border-l-4 font-bold text-[8px] not-italic leading-tight shadow-sm animate-fade-in
-                          ${inc.status === 'Resolvido' ? 'bg-green-50 border-green-500 text-green-800' :
-                            inc.status === 'Em Análise' ? 'bg-yellow-50 border-yellow-500 text-yellow-800' :
-                              'bg-red-50 border-red-500 text-red-800'}`}>
-                          <div className="flex items-center gap-1 mb-1">
-                            <span>{inc.status === 'Resolvido' ? '✅' : inc.status === 'Em Análise' ? '🟡' : '🔴'}</span>
-                            <span className="uppercase tracking-widest">Devolutiva da Gestão:</span>
-                          </div>
-                          {inc.managementFeedback}
-                        </div>
-                      )}
-                    </td>
                     <td className="p-4">
                       <div className="flex justify-center gap-2">
                         <button
@@ -430,6 +415,27 @@ const ProfessorView: React.FC<ProfessorViewProps> = ({ user, incidents, students
                           </svg>
                         </button>
                       </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase ${inc.category === 'MEDIDA EDUCATIVA' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                        {inc.category}
+                      </span>
+                    </td>
+                    <td className="p-4 uppercase font-bold text-gray-400">{inc.professorName}</td>
+                    <td className="p-4 max-w-xs text-gray-600 italic">
+                      <div className="truncate">{inc.description}</div>
+                      {inc.managementFeedback && (
+                        <div className={`mt-2 p-3 rounded-lg border-l-4 font-bold text-[8px] not-italic leading-tight shadow-sm animate-fade-in
+                          ${inc.status === 'Resolvido' ? 'bg-green-50 border-green-500 text-green-800' :
+                            inc.status === 'Em Análise' ? 'bg-yellow-50 border-yellow-500 text-yellow-800' :
+                              'bg-red-50 border-red-500 text-red-800'}`}>
+                          <div className="flex items-center gap-1 mb-1">
+                            <span>{inc.status === 'Resolvido' ? '✅' : inc.status === 'Em Análise' ? '🟡' : '🔴'}</span>
+                            <span className="uppercase tracking-widest">Devolutiva da Gestão:</span>
+                          </div>
+                          {inc.managementFeedback}
+                        </div>
+                      )}
                     </td>
                     <td className="p-4 text-center">
                       {(inc.authorEmail === user.email) && (
