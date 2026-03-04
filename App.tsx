@@ -256,8 +256,10 @@ const App: React.FC = () => {
 
       setStudents(finalStudents);
 
-      // Gerar lista de turmas dinamicamente
-      const uniqueClasses = Array.from(new Set(finalStudents.map(s => s.turma)));
+      // Gerar lista de turmas dinamicamente — inclui turmas da planilha mesmo sem alunos
+      const fromStudents = finalStudents.map(s => s.turma);
+      const fromSheets: string[] = (window as any).__allDetectedClasses || [];
+      const uniqueClasses = Array.from(new Set([...fromStudents, ...fromSheets]));
       const sortedClasses = uniqueClasses.sort((a, b) => {
         const getOrder = (s: string) => {
           // Normaliza: remove acentos e caracteres especiais, mantendo apenas letras e números

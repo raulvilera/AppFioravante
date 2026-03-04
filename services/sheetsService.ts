@@ -4,7 +4,7 @@ import { Incident, Student } from '../types';
 /**
  * URL do seu Google Apps Script implantado como Web App.
  */
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzEK2-urKqO_djeWGruU5ICce2ce2_dlJ1uO0xmuOsYhdU2tdl_r4sudu8bBu2MRVUPfQ/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylej3Lw5-Sp0iudgrjouoKGvoSOieTwh2M35QSbcmt1dWBBepfOXTC5f5vlXNazn1T/exec';
 
 /**
  * Carrega a lista de alunos da planilha Google Sheets.
@@ -25,6 +25,17 @@ export const loadStudentsFromSheets = async (): Promise<Student[]> => {
 
     if (data.success && Array.isArray(data.students)) {
       console.log(`✅ Google Sheets: Carregados ${data.students.length} alunos`);
+
+      // Salvar turmas detectadas pelo script (mesmo sem alunos) para o dropdown
+      if (data.debug?.classBlocksDetected && Array.isArray(data.debug.classBlocksDetected)) {
+        // Extrai apenas o nome da turma antes do " (nome:..."
+        const detectedClasses: string[] = data.debug.classBlocksDetected.map(
+          (entry: string) => entry.split(' (')[0].trim()
+        );
+        (window as any).__allDetectedClasses = detectedClasses;
+        console.log(`📋 Turmas detectadas na planilha: ${detectedClasses.join(', ')}`);
+      }
+
       return data.students;
     }
 
