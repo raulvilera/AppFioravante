@@ -8,7 +8,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap"
     rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -858,46 +858,50 @@
           </div>
         </div>
 
-        <!-- Gráficos -->
+        <!-- Gráficos 3D (Three.js) -->
         <div class="charts-row cols-3">
           <div class="chart-card">
             <div class="chart-title">&#128101; Distribuição de Risco</div>
-            <div class="chart-wrap h180">
-              <canvas id="chartRisco"></canvas>
-              <div class="donut-center">
-                <div class="val" id="dnt-risco">—</div>
-                <div class="lbl">Total</div>
+            <div style="position:relative;display:flex;justify-content:center">
+              <div id="chartRisco" style="height:180px;width:180px"></div>
+              <div
+                style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none">
+                <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff" id="dnt-risco">
+                  —</div>
+                <div style="font-size:9px;color:rgba(0,162,255,.4);letter-spacing:1px;text-transform:uppercase">Total
+                </div>
               </div>
             </div>
             <div class="chart-legend" id="leg-risco"></div>
           </div>
           <div class="chart-card">
             <div class="chart-title">&#129657; Status de ASOs</div>
-            <div class="chart-wrap h180">
-              <canvas id="chartAso"></canvas>
-              <div class="donut-center">
-                <div class="val" id="dnt-aso">—</div>
-                <div class="lbl">Total</div>
+            <div style="position:relative;display:flex;justify-content:center">
+              <div id="chartAso" style="height:180px;width:180px"></div>
+              <div
+                style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none">
+                <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff" id="dnt-aso">—
+                </div>
+                <div style="font-size:9px;color:rgba(0,162,255,.4);letter-spacing:1px;text-transform:uppercase">Total
+                </div>
               </div>
             </div>
             <div class="chart-legend" id="leg-aso"></div>
           </div>
           <div class="chart-card">
             <div class="chart-title">&#128218; Treinamentos</div>
-            <div class="chart-wrap h180">
-              <canvas id="chartTrein"></canvas>
-            </div>
+            <div id="chartTrein" style="height:180px"></div>
           </div>
         </div>
 
         <div class="charts-row cols-2">
           <div class="chart-card">
             <div class="chart-title">&#128101; Funcionários por Setor</div>
-            <div class="chart-wrap h200"><canvas id="chartSetores"></canvas></div>
+            <div id="chartSetores" style="height:200px"></div>
           </div>
           <div class="chart-card">
-            <div class="chart-title">&#129399; Estoque de EPIs</div>
-            <div class="chart-wrap h200"><canvas id="chartCats"></canvas></div>
+            <div class="chart-title">&#129399; EPIs por Status</div>
+            <div id="chartCats" style="height:200px"></div>
           </div>
         </div>
 
@@ -1240,62 +1244,131 @@
   </div>
 
   <script>
-    // ── ESTADO ────────────────────────────────────────────────────────────────────
+    // ── MOTOR 3D (Three.js) ───────────────────────────────────────────────────────
     let empresaId = null;
-    let charts = {};
-
-    Chart.defaults.color = 'rgba(255,255,255,0.6)';
-    Chart.defaults.borderColor = 'rgba(0,162,255,0.07)';
-
-    // ── PALETA ────────────────────────────────────────────────────────────────────
-    const PAL = ['rgba(0,114,255,.85)', 'rgba(0,162,255,.85)', 'rgba(0,210,255,.85)', 'rgba(120,90,255,.85)', 'rgba(80,180,255,.85)', 'rgba(0,210,200,.85)'];
+    const _rens = {}, _scenes = {}, _anims = {};
+    const PAL = ['#0072ff', '#00aaff', '#aa66ff', '#ffaa00', '#ff6644', '#00ddaa'];
     const pal = i => PAL[i % PAL.length];
-
-    // ── HELPERS ───────────────────────────────────────────────────────────────────
-    function ctxOf(id) { if (charts[id]) charts[id].destroy(); return document.getElementById(id)?.getContext('2d'); }
-    function legend(cid, labels, colors) {
-      const el = document.getElementById(cid); if (!el) return;
-      el.innerHTML = labels.map((l, i) => `<div class="leg-item"><div class="leg-dot" style="background:${colors[i]}"></div>${l}</div>`).join('');
-    }
     const noData = cols => `<tr><td colspan="${cols}" style="text-align:center;padding:20px;color:rgba(255,255,255,.2)">Nenhum registro</td></tr>`;
 
-    // ── ROSCA ─────────────────────────────────────────────────────────────────────
-    function makeDonut(id, labels, data, colors) {
-      const c = ctxOf(id); if (!c) return;
-      charts[id] = new Chart(c, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#050c1a', borderWidth: 3, hoverOffset: 8 }] }, options: { cutout: '70%', plugins: { legend: { display: false } }, animation: { duration: 900 } } });
+    function _clr(id) {
+      if (_anims[id]) { cancelAnimationFrame(_anims[id]); delete _anims[id]; }
+      if (_rens[id]) { _rens[id].dispose(); delete _rens[id]; }
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+      delete _scenes[id];
+    }
+    function _col(c) {
+      try { return new THREE.Color(c); } catch (e) { return new THREE.Color(0.3, 0.6, 1); }
     }
 
-    // ── BARRAS 3D VERTICAIS ───────────────────────────────────────────────────────
-    function makeBar3D(id, labels, data, colors) {
-      const c = ctxOf(id); if (!c) return;
-      const dark = colors.map(col => col.replace(/[\d.]+\)$/, '0.40)'));
-      const light = colors.map(col => col.replace(/[\d.]+\)$/, '0.95)'));
-      const p3d = {
-        id: 'p3d_' + id, afterDatasetsDraw(chart) {
-          const { ctx: c2 } = chart; const dep = 9;
-          chart.data.datasets.forEach((_, di) => {
-            const meta = chart.getDatasetMeta(di); if (!meta.visible) return;
-            meta.data.forEach((bar, i) => {
-              if (!bar) return;
-              const { x, y, width, base } = bar.getProps(['x', 'y', 'width', 'base'], true);
-              const w = width * .85, l = x - w / 2, r = x + w / 2;
-              c2.save();
-              c2.beginPath(); c2.moveTo(l, y); c2.lineTo(l + dep, y - dep * .5); c2.lineTo(r + dep, y - dep * .5); c2.lineTo(r, y); c2.closePath();
-              c2.fillStyle = light[i] || colors[i]; c2.globalAlpha = .9; c2.fill();
-              c2.beginPath(); c2.moveTo(r, y); c2.lineTo(r + dep, y - dep * .5); c2.lineTo(r + dep, base - dep * .5); c2.lineTo(r, base); c2.closePath();
-              c2.fillStyle = dark[i] || colors[i]; c2.globalAlpha = 1; c2.fill();
-              c2.restore();
-            });
-          });
-        }
-      };
-      charts[id] = new Chart(c, { type: 'bar', data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: false, barPercentage: .7, categoryPercentage: .72 }] }, options: { indexAxis: 'x', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(0,162,255,.05)' }, ticks: { color: '#fff', font: { size: 11, weight: '600' } } }, y: { grid: { color: 'rgba(0,162,255,.06)' }, ticks: { color: 'rgba(255,255,255,.6)', font: { size: 10 } }, beginAtZero: true } }, animation: { duration: 900 } }, plugins: [p3d] });
+    // ── ROSCA 3D REAL ─────────────────────────────────────────────────────────────
+    function donut3d(id, labels, values, colors) {
+      _clr(id);
+      const cont = document.getElementById(id); if (!cont) return;
+      const W = cont.offsetWidth || 180, H = cont.offsetHeight || 180;
+      const scene = new THREE.Scene();
+      const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 50);
+      cam.position.set(0, 2.2, 4.2); cam.lookAt(0, 0, 0);
+      const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      ren.setSize(W, H); ren.setPixelRatio(Math.min(devicePixelRatio, 2));
+      ren.shadowMap.enabled = true;
+      cont.appendChild(ren.domElement);
+      _rens[id] = ren;
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+      const dl = new THREE.DirectionalLight(0xffffff, 1.1);
+      dl.position.set(4, 6, 4); dl.castShadow = true; scene.add(dl);
+      scene.add(Object.assign(new THREE.PointLight(0x00aaff, 0.4, 20), { position: new THREE.Vector3(-3, 2, 2) }));
+
+      const total = values.reduce((a, b) => a + b, 0) || 1;
+      const iR = 0.52, oR = 1.0, depth = 0.38; let sa = -Math.PI / 2;
+      const grp = new THREE.Group(); scene.add(grp);
+
+      values.forEach((v, i) => {
+        if (v <= 0) return;
+        const ang = (v / total) * Math.PI * 2;
+        const segs = Math.max(16, Math.round(ang * 24));
+        const shape = new THREE.Shape();
+        shape.moveTo(Math.cos(sa) * oR, Math.sin(sa) * oR);
+        for (let s = 0; s <= segs; s++) { const a = sa + (ang * s / segs); shape.lineTo(Math.cos(a) * oR, Math.sin(a) * oR); }
+        for (let s = segs; s >= 0; s--) { const a = sa + (ang * s / segs); shape.lineTo(Math.cos(a) * iR, Math.sin(a) * iR); }
+        shape.closePath();
+        const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.03, bevelSegments: 4 });
+        const mat = new THREE.MeshPhongMaterial({ color: _col(colors[i]), shininess: 140, specular: new THREE.Color(0.3, 0.3, 0.3) });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.x = -Math.PI / 2; mesh.castShadow = true; mesh.receiveShadow = true;
+        grp.add(mesh); sa += ang;
+      });
+
+      // legenda
+      const leg = document.getElementById('leg-' + id.replace('chart', '').replace(/^R/, 'r').replace(/^A/, 'a'));
+      const legEl = document.getElementById('leg-risco') || document.getElementById('leg-aso') || document.getElementById('leg-' + id.slice(5));
+      const legTarget = id === 'chartRisco' ? document.getElementById('leg-risco') : id === 'chartAso' ? document.getElementById('leg-aso') : null;
+      if (legTarget) legTarget.innerHTML = labels.map((l, i) => `<div class="leg-item"><div class="leg-dot" style="background:${colors[i]}"></div>${l}</div>`).join('');
+
+      let t = 0;
+      function anim() { _anims[id] = requestAnimationFrame(anim); t += 0.007; grp.rotation.y = t * 0.35; ren.render(scene, cam); }
+      anim();
     }
 
-    // ── BARRAS NORMAIS ────────────────────────────────────────────────────────────
-    function makeBar(id, labels, data, colors) {
-      const c = ctxOf(id); if (!c) return;
-      charts[id] = new Chart(c, { type: 'bar', data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 6, borderSkipped: false }] }, options: { indexAxis: 'x', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(0,162,255,.05)' }, ticks: { color: '#fff', font: { size: 11 } } }, y: { grid: { color: 'rgba(0,162,255,.06)' }, ticks: { color: 'rgba(255,255,255,.6)', font: { size: 10 } }, beginAtZero: true } }, animation: { duration: 800 } } });
+    // ── BARRAS 3D REAIS ───────────────────────────────────────────────────────────
+    function bar3d(id, labels, values, colors) {
+      _clr(id);
+      const cont = document.getElementById(id); if (!cont) return;
+      const W = cont.offsetWidth || 300, H = cont.offsetHeight || 200;
+      const scene = new THREE.Scene();
+      const cam = new THREE.PerspectiveCamera(38, W / H, 0.1, 60);
+      cam.position.set(0, 3.5, 8); cam.lookAt(0, 0.5, 0);
+      const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      ren.setSize(W, H); ren.setPixelRatio(Math.min(devicePixelRatio, 2));
+      ren.shadowMap.enabled = true;
+      cont.appendChild(ren.domElement);
+      _rens[id] = ren;
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+      const dl = new THREE.DirectionalLight(0xffffff, 1.0);
+      dl.position.set(5, 8, 5); dl.castShadow = true; scene.add(dl);
+      scene.add(Object.assign(new THREE.PointLight(0x00aaff, 0.3, 30), { position: new THREE.Vector3(-4, 4, 3) }));
+
+      const maxV = Math.max(...values, 1);
+      const bW = 0.7, gap = 0.45, tw = (bW + gap) * values.length;
+      const sx = -tw / 2 + bW / 2;
+      const grp = new THREE.Group(); scene.add(grp);
+
+      values.forEach((v, i) => {
+        const h = Math.max((v / maxV) * 3.5, 0.1);
+        const col = _col(colors[i % colors.length]);
+        // barra principal
+        const geo = new THREE.BoxGeometry(bW, h, bW);
+        const mat = new THREE.MeshPhongMaterial({ color: col, shininess: 120, specular: new THREE.Color(0.2, 0.2, 0.2) });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(sx + i * (bW + gap), h / 2, 0);
+        mesh.castShadow = true; mesh.receiveShadow = true; grp.add(mesh);
+        // topo brilhante
+        const topMat = new THREE.MeshPhongMaterial({ color: col, emissive: col, emissiveIntensity: 0.5, shininess: 220 });
+        const top = new THREE.Mesh(new THREE.BoxGeometry(bW, 0.06, bW), topMat);
+        top.position.set(sx + i * (bW + gap), h + 0.03, 0); grp.add(top);
+        // label flutuante
+        const lc = document.createElement('canvas'); lc.width = 128; lc.height = 80;
+        const lx = lc.getContext('2d');
+        lx.fillStyle = 'rgba(0,120,255,0.85)'; lx.font = 'bold 17px sans-serif'; lx.textAlign = 'center';
+        lx.fillText((labels[i] + '').substring(0, 8), 64, 26);
+        lx.fillStyle = 'rgba(255,255,255,0.75)'; lx.font = 'bold 22px sans-serif';
+        lx.fillText(v, 64, 54);
+        const tex = new THREE.CanvasTexture(lc);
+        const lm = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
+        const lp = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.7), lm);
+        lp.position.set(sx + i * (bW + gap), -0.5, 0.45); grp.add(lp);
+      });
+
+      // base
+      const base = new THREE.Mesh(new THREE.BoxGeometry(tw + 1, 0.08, 1.8), new THREE.MeshPhongMaterial({ color: new THREE.Color(0.03, 0.07, 0.14), shininess: 30 }));
+      base.position.set(0, -0.04, 0); base.receiveShadow = true; grp.add(base);
+
+      let t = 0;
+      function anim() { _anims[id] = requestAnimationFrame(anim); t += 0.005; grp.rotation.y = Math.sin(t) * 0.14; ren.render(scene, cam); }
+      anim();
     }
 
     // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -1347,24 +1420,28 @@
       const medio = Math.max(0, Math.round(total * .4)), baixo = Math.max(0, total - alto - medio);
       const valido = Math.max(0, total - (d.kpis.aso_vencidos || 0) - (d.kpis.aso_vencer || 0));
 
-      const cR = ['rgba(255,60,60,.85)', 'rgba(255,170,0,.85)', 'rgba(0,200,60,.85)'];
-      makeDonut('chartRisco', ['Alto', 'Médio', 'Baixo'], [alto, medio, baixo], cR);
-      legend('leg-risco', ['Alto', 'Médio', 'Baixo'], cR);
-
-      const cA = ['rgba(0,200,60,.85)', 'rgba(255,170,0,.85)', 'rgba(255,60,60,.85)'];
-      makeDonut('chartAso', ['Válido', 'A Vencer', 'Vencido'], [valido, d.kpis.aso_vencer || 0, d.kpis.aso_vencidos || 0], cA);
-      legend('leg-aso', ['Válido', 'A Vencer', 'Vencido'], cA);
-
-      const concl = d.kpis.trein_concluidos || 0, agend = Math.max(0, (d.kpis.treinamentos || 0) - concl);
-      makeBar('chartTrein', ['Concluídos', 'Agendados', 'Total'], [concl, agend, d.kpis.treinamentos || 0], ['rgba(0,200,80,.85)', 'rgba(0,140,255,.85)', 'rgba(0,200,200,.85)']);
-
-      const setores = d.setores || {};
-      makeBar3D('chartSetores', Object.keys(setores), Object.values(setores), Object.keys(setores).map((_, i) => pal(i)));
-
-      const cats = d.cats_recentes || [];
-      const gravs = { Leve: 0, Moderado: 0, Grave: 0, Fatal: 0 };
-      cats.forEach(c => { if (gravs[c.gravidade] !== undefined) gravs[c.gravidade]++; });
-      makeBar3D('chartCats', Object.keys(gravs), Object.values(gravs), ['rgba(0,200,60,.85)', 'rgba(255,170,0,.85)', 'rgba(255,80,0,.85)', 'rgba(200,0,0,.85)']);
+      // Gráficos 3D reais com Three.js
+      setTimeout(() => {
+        donut3d('chartRisco', ['Alto', 'Médio', 'Baixo'], [alto, medio, baixo],
+          ['#ff3232', '#ffaa00', '#00c84a']);
+        donut3d('chartAso', ['Válido', 'A Vencer', 'Vencido'],
+          [valido, d.kpis.aso_vencer || 0, d.kpis.aso_vencidos || 0],
+          ['#00c84a', '#ffaa00', '#ff3232']);
+        const concl = d.kpis.trein_concluidos || 0;
+        const agend = Math.max(0, (d.kpis.treinamentos || 0) - concl);
+        bar3d('chartTrein', ['Concluídos', 'Agendados', 'Total'],
+          [concl, agend, d.kpis.treinamentos || 0],
+          ['#00c84a', '#0099ff', '#00d8d8']);
+        const setores = d.setores || {};
+        if (Object.keys(setores).length) {
+          bar3d('chartSetores', Object.keys(setores), Object.values(setores),
+            Object.keys(setores).map((_, i) => pal(i)));
+        }
+        const epis_ok = Math.max(0, (d.kpis.total_funcionarios || 5) - (d.kpis.epis_criticos || 0));
+        bar3d('chartCats', ['EPI OK', 'Críticos'],
+          [epis_ok, d.kpis.epis_criticos || 0],
+          ['#00c84a', '#ff3232']);
+      }, 120);
 
       document.getElementById('tb-risco').innerHTML = (d.top_risco || []).map(f =>
         `<tr><td style="font-weight:600;color:#fff">${f.nome}</td><td>${f.cargo}</td><td>${f.setor}</td>

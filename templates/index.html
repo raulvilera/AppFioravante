@@ -1951,7 +1951,7 @@
       const W = cont.offsetWidth || 200, H = cont.offsetHeight || 200;
       const scene = new THREE.Scene();
       const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 50);
-      cam.position.set(0, 1.8, 3.8); cam.lookAt(0, 0, 0);
+      cam.position.set(0, 2.5, 4.8); cam.lookAt(0, 0, 0);
       const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       ren.setSize(W, H); ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       ren.shadowMap.enabled = true; ren.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1984,7 +1984,7 @@
         grp.add(mesh); sa += ang;
       });
 
-      // legend update
+      // legenda
       const legEl = document.getElementById('leg-' + id.replace('c-', ''));
       if (legEl) {
         legEl.innerHTML = labels.map((l, i) => `<div class="leg-item"><div class="leg-dot" style="background:${colors[i]}"></div>${l}: <b>${values[i]}</b></div>`).join('');
@@ -2007,7 +2007,7 @@
       const W = cont.offsetWidth || 300, H = cont.offsetHeight || 200;
       const scene = new THREE.Scene();
       const cam = new THREE.PerspectiveCamera(38, W / H, 0.1, 60);
-      cam.position.set(0, 3.2, 7); cam.lookAt(0, 0.5, 0);
+      cam.position.set(0, 3.8, 9); cam.lookAt(0, 0.5, 0);
       const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       ren.setSize(W, H); ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       ren.shadowMap.enabled = true; cont.appendChild(ren.domElement);
@@ -2156,14 +2156,14 @@
       const medio = Math.round(total * 0.35), baixo = Math.max(0, total - alto - medio);
       setTimeout(() => {
         donut3d('c-risco', ['Alto Risco', 'Médio Risco', 'Baixo Risco'], [alto, medio, baixo], ['rgba(255,50,50,0.9)', 'rgba(255,160,0,0.9)', 'rgba(0,120,255,0.9)']);
-      }, 100);
+      }, 200);
 
       const setores = d.setores || {};
       const sKeys = Object.keys(setores), sVals = Object.values(setores);
       const sCols = ['#0077ff', '#00aaff', '#aa66ff', '#ffaa00', '#ff6644', '#00ddaa', '#ff66aa'];
       setTimeout(() => {
         bar3d('c-setores', sKeys, sVals, sCols);
-      }, 100);
+      }, 200);
 
       // Alertas
       const ac = { warning: '#ffcc00', danger: '#ff5555', info: '#66aaff', success: '#0077ff' };
@@ -2189,7 +2189,7 @@
         donut3d('c-ia-risco', ['Alto', 'Médio', 'Baixo'], [alto, medio, baixo], ['rgba(255,50,50,0.9)', 'rgba(255,160,0,0.9)', 'rgba(0,120,255,0.9)']);
         document.getElementById('ia-prob-val').textContent = (d.ia?.probabilidade_acidente || 0) + '%';
         document.getElementById('ia-seg-val').textContent = (d.ia?.indice_seguranca || 0) + '%';
-      }, 150);
+      }, 250);
 
       renderCal();
     }
