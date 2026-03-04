@@ -1268,7 +1268,7 @@
           <!-- Setores -->
           <div class="card">
             <div class="ctitle">👥 Funcionários por Setor</div>
-            <div id="setores-list"></div>
+            <div class="chart3d" id="c-setores" style="height:220px"></div>
           </div>
           <!-- Rosca 3D Risco -->
           <div class="card pur">
@@ -2158,13 +2158,12 @@
         donut3d('c-risco', ['Alto Risco', 'Médio Risco', 'Baixo Risco'], [alto, medio, baixo], ['rgba(255,50,50,0.9)', 'rgba(255,160,0,0.9)', 'rgba(0,120,255,0.9)']);
       }, 100);
 
-      // Setores
       const setores = d.setores || {};
-      const maxS = Math.max(...Object.values(setores), 1);
-      const colors = ['#0077ff', '#00aaff', '#aa66ff', '#ffaa00', '#ff6644', '#00ddaa', '#ff66aa'];
-      document.getElementById('setores-list').innerHTML = Object.entries(setores).map(([s, n], i) =>
-        `<div class="setor-row"><div class="setor-name">${s}</div><div class="setor-bar-bg"><div class="setor-bar" style="width:${Math.round(n / maxS * 100)}%;background:${colors[i % colors.length]}"></div></div><div class="setor-n">${n}</div></div>`
-      ).join('') || '<span style="color:var(--muted);font-size:11px">Sem dados</span>';
+      const sKeys = Object.keys(setores), sVals = Object.values(setores);
+      const sCols = ['#0077ff', '#00aaff', '#aa66ff', '#ffaa00', '#ff6644', '#00ddaa', '#ff66aa'];
+      setTimeout(() => {
+        bar3d('c-setores', sKeys, sVals, sCols);
+      }, 100);
 
       // Alertas
       const ac = { warning: '#ffcc00', danger: '#ff5555', info: '#66aaff', success: '#0077ff' };

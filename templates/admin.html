@@ -8,7 +8,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap"
     rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -829,53 +829,103 @@
   </div>
 
   <script>
-    // ── ESTADO ────────────────────────────────────────────────────────────────────
-    let charts = {};
+    // ── ESTADO ──
+    let renderers = {}, scenes = {}, animIds = {};
     let allEmpresas = [], allDash = [];
-
-    Chart.defaults.color = 'rgba(255,255,255,0.6)';
-    Chart.defaults.borderColor = 'rgba(0,162,255,0.07)';
-
-    const PAL = ['rgba(0,114,255,.85)', 'rgba(0,162,255,.85)', 'rgba(0,210,255,.85)', 'rgba(120,90,255,.85)', 'rgba(80,180,255,.85)', 'rgba(255,80,80,.85)'];
+    const PAL = ['#0072ff', '#00c6ff', '#00dbde', '#fc00ff', '#7855ff', '#ff5050'];
     const pal = i => PAL[i % PAL.length];
 
-    // ── HELPERS ───────────────────────────────────────────────────────────────────
-    function ctxOf(id) { if (charts[id]) charts[id].destroy(); return document.getElementById(id)?.getContext('2d'); }
-    function legend(cid, labels, colors) {
-      const el = document.getElementById(cid); if (!el) return;
-      el.innerHTML = labels.map((l, i) => `<div class="leg-item"><div class="leg-dot" style="background:${colors[i]}"></div>${l}</div>`).join('');
+    function clearScene(id) {
+      if (animIds[id]) cancelAnimationFrame(animIds[id]);
+      const el = document.getElementById(id); if (!el) return;
+      while (el.firstChild) el.removeChild(el.firstChild);
+      if (renderers[id]) { renderers[id].dispose(); delete renderers[id]; }
     }
-    const noData = cols => `<tr><td colspan="${cols}" style="text-align:center;padding:20px;color:rgba(255,255,255,.2)">Nenhum registro</td></tr>`;
+    const pc = c => new THREE.Color(c);
 
-    function makeDonut(id, labels, data, colors) {
-      const c = ctxOf(id); if (!c) return;
-      charts[id] = new Chart(c, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#050c1a', borderWidth: 3, hoverOffset: 8 }] }, options: { cutout: '70%', plugins: { legend: { display: false } }, animation: { duration: 900 } } });
+    // DONUT 3D
+    function donut3d(id, labels, values, colors) {
+      clearScene(id);
+      const cont = document.getElementById(id); if (!cont) return;
+      const W = cont.offsetWidth || 180, H = cont.offsetHeight || 180;
+      const scene = new THREE.Scene();
+      const cam = new THREE.PerspectiveCamera(40, W / H, 0.1, 50);
+      cam.position.set(0, 2.5, 4.5); cam.lookAt(0, 0, 0);
+      const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      ren.setSize(W, H); ren.setPixelRatio(window.devicePixelRatio);
+      cont.appendChild(ren.domElement);
+      renderers[id] = ren; scenes[id] = scene;
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(3, 5, 2); scene.add(dl);
+
+      const grp = new THREE.Group(); scene.add(grp);
+      const total = values.reduce((a, b) => a + b, 0) || 1;
+      let sa = -Math.PI / 2;
+
+      values.forEach((v, i) => {
+        const ang = (v / total) * Math.PI * 2; if (ang <= 0) return;
+        const shape = new THREE.Shape();
+        shape.absarc(0, 0, 1.0, sa, sa + ang, false);
+        shape.absarc(0, 0, 0.6, sa + ang, sa, true);
+        const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.25, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.02, bevelSegments: 3 });
+        const mat = new THREE.MeshPhongMaterial({ color: pc(colors[i % colors.length]), shininess: 100 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.x = -Math.PI / 2; grp.add(mesh); sa += ang;
+      });
+
+      const legEl = document.getElementById('leg-' + id.replace('chart-', ''));
+      if (legEl) legEl.innerHTML = labels.map((l, i) => `<div class="leg-item"><div class="leg-dot" style="background:${colors[i % colors.length]}"></div>${l}: <b>${values[i]}</b></div>`).join('');
+
+      let t = 0;
+      function anim() { animIds[id] = requestAnimationFrame(anim); t += 0.008; grp.rotation.y = t * 0.4; ren.render(scene, cam) }
+      anim();
     }
 
-    function makeBar3D(id, labels, data, colors) {
-      const c = ctxOf(id); if (!c) return;
-      const dark = colors.map(col => col.replace(/[\d.]+\)$/, '0.40)'));
-      const light = colors.map(col => col.replace(/[\d.]+\)$/, '0.95)'));
-      const p3d = {
-        id: 'p3d_' + id, afterDatasetsDraw(chart) {
-          const { ctx: c2 } = chart; const dep = 9;
-          chart.data.datasets.forEach((_, di) => {
-            const meta = chart.getDatasetMeta(di); if (!meta.visible) return;
-            meta.data.forEach((bar, i) => {
-              if (!bar) return;
-              const { x, y, width, base } = bar.getProps(['x', 'y', 'width', 'base'], true);
-              const w = width * .85, l = x - w / 2, r = x + w / 2;
-              c2.save();
-              c2.beginPath(); c2.moveTo(l, y); c2.lineTo(l + dep, y - dep * .5); c2.lineTo(r + dep, y - dep * .5); c2.lineTo(r, y); c2.closePath();
-              c2.fillStyle = light[i] || colors[i]; c2.globalAlpha = .9; c2.fill();
-              c2.beginPath(); c2.moveTo(r, y); c2.lineTo(r + dep, y - dep * .5); c2.lineTo(r + dep, base - dep * .5); c2.lineTo(r, base); c2.closePath();
-              c2.fillStyle = dark[i] || colors[i]; c2.globalAlpha = 1; c2.fill();
-              c2.restore();
-            });
-          });
-        }
-      };
-      charts[id] = new Chart(c, { type: 'bar', data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: false, barPercentage: .68, categoryPercentage: .72 }] }, options: { indexAxis: 'x', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(200,150,0,.05)' }, ticks: { color: '#fff', font: { size: 10, weight: '600' } } }, y: { grid: { color: 'rgba(200,150,0,.06)' }, ticks: { color: 'rgba(255,255,255,.6)', font: { size: 10 } }, beginAtZero: true } }, animation: { duration: 900 } }, plugins: [p3d] });
+    // BARRAS 3D VERTICAIS
+    function bar3d(id, labels, values, colors) {
+      clearScene(id);
+      const cont = document.getElementById(id); if (!cont) return;
+      const W = cont.offsetWidth || 300, H = cont.offsetHeight || 200;
+      const scene = new THREE.Scene();
+      const cam = new THREE.PerspectiveCamera(38, W / H, 0.1, 50);
+      cam.position.set(0, 3, 7); cam.lookAt(0, 0.5, 0);
+      const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      ren.setSize(W, H); ren.setPixelRatio(window.devicePixelRatio);
+      cont.appendChild(ren.domElement);
+      renderers[id] = ren; scenes[id] = scene;
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5, 7, 5); scene.add(dl);
+
+      const maxV = Math.max(...values, 1);
+      const bW = 0.6, gap = 0.4, tw = (bW + gap) * values.length;
+      const sx = -tw / 2 + bW / 2;
+      const grp = new THREE.Group(); scene.add(grp);
+
+      values.forEach((v, i) => {
+        const h = Math.max((v / maxV) * 3.5, 0.1);
+        const geo = new THREE.BoxGeometry(bW, h, bW);
+        const mat = new THREE.MeshPhongMaterial({ color: pc(colors[i % colors.length]), shininess: 110 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(sx + i * (bW + gap), h / 2, 0);
+        grp.add(mesh);
+
+        // Label value
+        const lc = document.createElement('canvas'); lc.width = 64; lc.height = 64;
+        const lx = lc.getContext('2d');
+        lx.fillStyle = '#fff'; lx.font = 'bold 24px Rajdhani'; lx.textAlign = 'center';
+        lx.fillText(v, 32, 40);
+        const tex = new THREE.CanvasTexture(lc);
+        const pm = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+        const pmesh = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), pm);
+        pmesh.position.set(sx + i * (bW + gap), h + 0.5, 0.2);
+        grp.add(pmesh);
+      });
+
+      let t = 0;
+      function anim() { animIds[id] = requestAnimationFrame(anim); t += 0.005; grp.rotation.y = Math.sin(t) * 0.15; ren.render(scene, cam) }
+      anim();
     }
 
     // ── CARREGA TUDO ──────────────────────────────────────────────────────────────
@@ -896,15 +946,13 @@
       // Donut status
       const comRisco = allDash.filter(d => (d.kpis.alto_risco || 0) > 0).length;
       const semRisco = allEmpresas.length - comRisco;
-      const cS = ['rgba(255,80,80,.85)', 'rgba(0,114,255,.85)'];
-      makeDonut('chartStatus', ['Com Risco', 'Seguras'], [comRisco, semRisco], cS);
-      legend('leg-status', ['Com Risco', 'Seguras'], cS);
+      donut3d('chartStatus', ['Com Risco', 'Seguras'], [comRisco, semRisco], ['#ff5050', '#0072ff']);
 
       // Barras 3D score
-      const labels = allEmpresas.map(e => e.nome.substring(0, 14));
-      makeBar3D('chartScoreEmp', labels, allDash.map(d => d.kpis.score_seguranca || 0), allEmpresas.map((_, i) => pal(i)));
-      makeBar3D('chartColEmp', labels, allDash.map(d => d.kpis.total_funcionarios || 0), allEmpresas.map((_, i) => pal(i)));
-      makeBar3D('chartRiskEmp', labels, allDash.map(d => d.kpis.alto_risco || 0), allEmpresas.map(() => 'rgba(255,80,80,.85)'));
+      const labels = allEmpresas.map(e => e.nome.substring(0, 10));
+      bar3d('chartScoreEmp', labels, allDash.map(d => d.kpis.score_seguranca || 0), allEmpresas.map((_, i) => pal(i)));
+      bar3d('chartColEmp', labels, allDash.map(d => d.kpis.total_funcionarios || 0), allEmpresas.map((_, i) => pal(i)));
+      bar3d('chartRiskEmp', labels, allDash.map(d => d.kpis.alto_risco || 0), allEmpresas.map(() => '#ff5050'));
 
       // Tabelas
       const rows = allEmpresas.map((e, i) => {
@@ -946,7 +994,11 @@
       if (el) el.classList.add('active');
       const T = { overview: 'PAINEL ADMINISTRATIVO', empresas: 'GERENCIAR EMPRESAS', usuarios: 'USUÁRIOS DO SISTEMA' };
       document.getElementById('topTitle').textContent = T[name] || name;
-      if (name === 'empresas') { makeBar3D('chartColEmp', allEmpresas.map(e => e.nome.substring(0, 14)), allDash.map(d => d.kpis.total_funcionarios || 0), allEmpresas.map((_, i) => pal(i))); makeBar3D('chartRiskEmp', allEmpresas.map(e => e.nome.substring(0, 14)), allDash.map(d => d.kpis.alto_risco || 0), allEmpresas.map(() => 'rgba(255,80,80,.85)')); }
+      if (name === 'empresas') {
+        const labels = allEmpresas.map(e => e.nome.substring(0, 10));
+        bar3d('chartColEmp', labels, allDash.map(d => d.kpis.total_funcionarios || 0), allEmpresas.map((_, i) => pal(i)));
+        bar3d('chartRiskEmp', labels, allDash.map(d => d.kpis.alto_risco || 0), allEmpresas.map(() => '#ff5050'));
+      }
       if (name === 'usuarios') loadUsuarios();
     }
 
