@@ -278,14 +278,14 @@ const App = () => {
       const fromLocalDB = STUDENTS_DB.map(s => s.turma);
 
       const uniqueClasses = Array.from(new Set([...fromStudents, ...fromSheets, ...fromLocalDB]))
-        .filter(t => t !== '---'); // Remove placeholders
+        .filter(t => t && t !== '---' && !t.includes('desconsidera') && !t.includes('desconsidere'));
+
       const sortedClasses = uniqueClasses.sort((a, b) => {
         const getOrder = (s: string) => {
-          // Normaliza: remove acentos e caracteres especiais, mantendo apenas letras e números
           const norm = s.toUpperCase()
             .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-            .replace(/[^A-Z0-9]/g, '');      // Mantém apenas letras e números
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^A-Z0-9]/g, '');
 
           if (norm.includes('6ANO')) return 1;
           if (norm.includes('7ANO')) return 2;
@@ -294,9 +294,6 @@ const App = () => {
           if (norm.includes('1SERIE')) return 5;
           if (norm.includes('2SERIE')) return 6;
           if (norm.includes('3SERIE')) return 7;
-          if (norm.includes('1EM')) return 5;
-          if (norm.includes('2EM')) return 6;
-          if (norm.includes('3EM')) return 7;
           return 99;
         };
 
@@ -304,6 +301,8 @@ const App = () => {
         const orderB = getOrder(b);
 
         if (orderA !== orderB) return orderA - orderB;
+
+        // Para turmas da mesma série, ordena por letra (A, B, C...)
         return a.localeCompare(b, 'pt-BR', { numeric: true });
       });
 
