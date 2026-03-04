@@ -212,14 +212,19 @@
       <div class="field"><label>Telefone</label>
         <div class="iw"><input type="text" id="telefone" placeholder="(11) 99999-9999" required></div>
       </div>
-      <div class="field"><label>Responsável</label>
+      <div class="field"><label>Responsável pelo RH</label>
         <div class="iw"><input type="text" id="responsavel" placeholder="Nome do responsável" required></div>
+      </div>
+      <div class="field"><label>E-mail para Envio dos Formulários</label>
+        <div class="iw"><input type="email" id="email" placeholder="rh@suaempresa.com.br" required></div>
       </div>
       <div class="field"><label>Número de Colaboradores</label>
         <div class="iw"><input type="number" id="colaboradores" placeholder="50" required></div>
       </div>
-      <div class="field"><label>Setor Principal</label>
-        <div class="iw"><input type="text" id="setores" placeholder="Ex: Produção, Logística" required></div>
+      <div class="field"><label>Setores da Empresa <span
+            style="font-weight:400;text-transform:none;color:rgba(255,255,255,0.3)">— separe por vírgula</span></label>
+        <div class="iw"><input type="text" id="setores" placeholder="Ex: Produção, Logística, RH, Administrativo"
+            required></div>
       </div>
       <button type="submit" class="btn">⚡ CADASTRAR EMPRESA</button>
     </form>
@@ -229,7 +234,7 @@
     document.getElementById('form').addEventListener('submit', async (e) => {
       e.preventDefault(); const btn = e.target.querySelector('button'); btn.textContent = 'PROCESSANDO...'; btn.disabled = true;
       const fd = new FormData();
-      ['cnpj', 'nome', 'telefone', 'responsavel', 'colaboradores', 'setores'].forEach(id => fd.append(id, document.getElementById(id).value));
+      ['cnpj', 'nome', 'email', 'telefone', 'responsavel', 'colaboradores', 'setores'].forEach(id => fd.append(id, document.getElementById(id).value));
       // Repassar empresa_id se existir na URL
       const params = new URLSearchParams(window.location.search);
       if (params.get('empresa_id')) fd.append('empresa_id', params.get('empresa_id'));

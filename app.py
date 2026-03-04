@@ -329,6 +329,40 @@ async def registrar_links_setores(
     except Exception as e:
         return {"success": True, "message": "Links registrados localmente (tabela ainda não criada no Supabase)."}
 
+@app.get("/api/setores/por-empresa")
+async def setores_por_empresa(empresa_id: int = None, token: str = None):
+    """
+    Retorna os setores cadastrados de uma empresa.
+    Pode ser buscado por empresa_id direto, ou por token (do link enviado ao setor).
+    """
+    try:
+        if token and not empresa_id:
+            # Buscar empresa_id pelo token do link
+            links = await sb_get("setor_links", {"token": f"eq.{token}"})
+            if links:
+                empresa_id = links[0].get("empresa_id")
+
+        if not empresa_id:
+            return {"success": False, "setores": [], "message": "empresa_id não encontrado."}
+
+        # Buscar todos os setores da empresa
+        links = await sb_get("setor_links", {"empresa_id": f"eq.{empresa_id}", "ativo": "eq.true"})
+        setores = [l.get("setor") for l in links if l.get("setor")]
+
+        # Fallback: buscar da tabela empresas se nenhum link salvo
+        if not setores:
+            empresas = await sb_get("empresas", {"id": f"eq.{empresa_id}"})
+            if empresas and empresas[0].get("setores"):
+                setores = [s.strip() for s in empresas[0]["setores"].split(",") if s.strip()]
+            nome_empresa = empresas[0].get("nome", "") if empresas else ""
+        else:
+            empresas = await sb_get("empresas", {"id": f"eq.{empresa_id}"})
+            nome_empresa = empresas[0].get("nome", "") if empresas else ""
+
+        return {"success": True, "setores": setores, "nome_empresa": nome_empresa, "empresa_id": empresa_id}
+    except Exception as e:
+        return {"success": False, "setores": [], "message": str(e)}
+
 @app.post("/api/auth/login")
 async def api_login(email: str = Form(...), password: str = Form(...)):
     """

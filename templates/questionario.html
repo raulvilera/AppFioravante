@@ -800,63 +800,132 @@
             </div>
           </div>
         </div>
-        <div class="fields-intro">
-          <div class="fi"><label>Cargo / Função</label><input type="text" id="fi-cargo"
-              placeholder="Ex: Analista, Operador..."></div>
-          <div class="fi"><label>Setor</label><select id="fi-setor">
-              <option value="">Selecione...</option>
-            </select></div>
-          <div class="fi"><label>Empresa</label><input type="text" id="fi-empresa" placeholder="Nome da empresa"
-              readonly></div>
+        <div class="fi"><label>Cargo / Função</label><input type="text" id="fi-cargo"
+            placeholder="Ex: Analista, Operador..."></div>
+        <div class="fi">
+          <label>Setor <span style="color:#ff6060;font-size:10px">* obrigatório</span></label>
+          <select id="fi-setor" required>
+            <option value="">⏳ Carregando setores...</option>
+          </select>
         </div>
-        <button class="btn-start" onclick="startQuiz()">Iniciar Diagnóstico →</button>
-        <div class="privacy-note">🔐 Este diagnóstico é totalmente anônimo. Os dados são consolidados por setor, nunca
-          individualmente.</div>
-      </div>
-    </div>
-
-    <!-- QUESTOES (topico ativo) -->
-    <div id="step-quiz" style="display:none">
-      <div class="topico-card">
-        <div class="topico-header">
-          <div class="topico-num" id="t-num">01</div>
-          <div>
-            <div class="topico-title" id="t-title">—</div>
-            <div class="topico-desc" id="t-desc">10 questões · Escala 0 a 4</div>
-          </div>
-        </div>
-        <div id="questoes-list"></div>
-        <div class="nav-btns">
-          <button class="btn-prev" id="btn-prev" onclick="prevTopico()">← Anterior</button>
-          <button class="btn-next" id="btn-next" onclick="nextTopico()">Próximo →</button>
+        <div class="fi"><label>Empresa</label><input type="text" id="fi-empresa" placeholder="Carregando..." readonly>
         </div>
       </div>
-    </div>
+      <button class="btn-start" onclick="startQuiz()">Iniciar Diagnóstico →</button>
+      <div id="setor-erro" style="display:none;color:#ff6060;font-size:12px;margin-top:8px;text-align:center">
+        ⚠️ Selecione seu setor antes de iniciar.
+      </div>
+      <div class="privacy-note">🔐 Este diagnóstico é totalmente anônimo. Os dados são consolidados por setor, nunca
+        individualmente.</div>
 
-    <!-- RESUMO PRÉ-ENVIO -->
-    <div id="step-resumo" style="display:none">
-      <div class="resumo-card">
-        <div class="resumo-title">📊 Resumo das Suas Respostas</div>
-        <div id="resumo-content"></div>
-        <div class="privacy-note">🔒 Ao confirmar, suas respostas são enviadas de forma anônima e serão consolidadas com
-          as respostas do seu setor.</div>
-        <button class="btn-enviar" onclick="submitRespostas()">✓ Confirmar e Enviar Diagnóstico</button>
+    </div>
+  </div>
+
+  <!-- QUESTOES (topico ativo) -->
+  <div id="step-quiz" style="display:none">
+    <div class="topico-card">
+      <div class="topico-header">
+        <div class="topico-num" id="t-num">01</div>
+        <div>
+          <div class="topico-title" id="t-title">—</div>
+          <div class="topico-desc" id="t-desc">10 questões · Escala 0 a 4</div>
+        </div>
+      </div>
+      <div id="questoes-list"></div>
+      <div class="nav-btns">
+        <button class="btn-prev" id="btn-prev" onclick="prevTopico()">← Anterior</button>
+        <button class="btn-next" id="btn-next" onclick="nextTopico()">Próximo →</button>
       </div>
     </div>
+  </div>
 
-    <!-- SUCESSO -->
-    <div id="step-sucesso" style="display:none">
-      <div class="sucesso-card" style="display:block">
-        <div class="sucesso-ico">✅</div>
-        <div class="sucesso-title">Diagnóstico Enviado!</div>
-        <div class="sucesso-txt">Obrigado pela sua participação.<br>Suas respostas foram registradas de forma anônima e
-          contribuirão para<br>a melhoria do ambiente de trabalho da sua empresa.</div>
-      </div>
+  <!-- RESUMO PRÉ-ENVIO -->
+  <div id="step-resumo" style="display:none">
+    <div class="resumo-card">
+      <div class="resumo-title">📊 Resumo das Suas Respostas</div>
+      <div id="resumo-content"></div>
+      <div class="privacy-note">🔒 Ao confirmar, suas respostas são enviadas de forma anônima e serão consolidadas com
+        as respostas do seu setor.</div>
+      <button class="btn-enviar" onclick="submitRespostas()">✓ Confirmar e Enviar Diagnóstico</button>
     </div>
+  </div>
+
+  <!-- SUCESSO -->
+  <div id="step-sucesso" style="display:none">
+    <div class="sucesso-card" style="display:block">
+      <div class="sucesso-ico">✅</div>
+      <div class="sucesso-title">Diagnóstico Enviado!</div>
+      <div class="sucesso-txt">Obrigado pela sua participação.<br>Suas respostas foram registradas de forma anônima e
+        contribuirão para<br>a melhoria do ambiente de trabalho da sua empresa.</div>
+    </div>
+  </div>
 
   </div>
 
   <script>
+    // ── CARREGAMENTO DINÂMICO DE SETORES ───────────────────────────────────
+    (async function carregarSetores() {
+      const p = new URLSearchParams(window.location.search);
+      const token = p.get('token') || '';
+      const empresaId = p.get('empresa_id') || '';
+
+      const sel = document.getElementById('fi-setor');
+      const empInput = document.getElementById('fi-empresa');
+
+      try {
+        let url = '/api/setores/por-empresa?';
+        if (token) url += `token=${encodeURIComponent(token)}`;
+        if (empresaId) url += `${token ? '&' : ''}empresa_id=${empresaId}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // Preencher nome da empresa
+        if (data.nome_empresa) empInput.value = data.nome_empresa;
+
+        // Popular dropdown
+        if (data.setores && data.setores.length > 0) {
+          sel.innerHTML = '<option value="">Selecione seu setor *</option>';
+          data.setores.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = '🏭 ' + s;
+            sel.appendChild(opt);
+          });
+        } else {
+          // Fallback: setores do parâmetro da URL (gerados no pop-up de planos)
+          const setoresUrl = p.get('setor');
+          if (setoresUrl) {
+            sel.innerHTML = '<option value="">Selecione seu setor *</option>';
+            const opt = document.createElement('option');
+            opt.value = setoresUrl;
+            opt.textContent = '🏭 ' + setoresUrl;
+            sel.appendChild(opt);
+            sel.value = setoresUrl; // pré-seleciona o setor do link
+          } else {
+            sel.innerHTML = '<option value="">Setor não encontrado</option>';
+          }
+        }
+      } catch (e) {
+        sel.innerHTML = '<option value="">Erro ao carregar setores</option>';
+      }
+    })();
+
+    // Função de início do quiz com validação de setor obrigatório
+    function startQuiz() {
+      const setor = document.getElementById('fi-setor').value;
+      const erro = document.getElementById('setor-erro');
+      if (!setor) {
+        erro.style.display = 'block';
+        document.getElementById('fi-setor').style.borderColor = 'rgba(255,60,60,0.6)';
+        return;
+      }
+      erro.style.display = 'none';
+      document.getElementById('fi-setor').style.borderColor = '';
+      // Continua para o quiz
+      iniciarQuiz();
+    }
+
     // ── BANCO DE QUESTÕES ──
     const TOPICOS = [
       {
@@ -864,6 +933,7 @@
         desc: "Avalia a presença de comportamentos abusivos, humilhação e cultura de denúncia.",
         ref: "MTE — Fator de Risco 1 | NR-1 §1.5.4",
         questoes: [
+
           { n: 1, txt: "Você já presenciou ou sofreu comentários ofensivos, piadas ou insinuações inadequadas no ambiente de trabalho?", logica: "direta" },
           { n: 2, txt: "Você se sente à vontade para relatar situações de assédio moral ou sexual na empresa sem medo de represálias?", logica: "invertida" },
           { n: 3, txt: "Existe um canal seguro e sigiloso para denunciar assédio na empresa?", logica: "invertida" },
