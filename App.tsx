@@ -235,7 +235,7 @@ const App = () => {
                     id: `synced-${Date.now()}-${i + index}`,
                     nome: s.nome,
                     ra: s.ra,
-                    turma: s.turma // Já normalizado acima
+                    turma: normalizeClassName(s.turma) // Garante normalização correta antes de salvar
                   }));
 
                   const { error } = await supabase.from('students').insert(studentsToInsert);

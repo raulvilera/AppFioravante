@@ -13,9 +13,9 @@ export const normalizeClassName = (raw: string): string => {
         .replace(/\s+/g, " ")            // Remove espaços duplos
         .trim();
 
-    // Tenta capturar o padrão: [Numero] [Tipo: ANO|SERIE|EM] [Letra/Identificador]
-    // Ex: "7ANO E" -> match[1]=7, match[2]=ANO, match[3]=E
-    const match = s.match(/(\d+)\s*(ANO|SERIE|EM)?\s*([A-Z])?/);
+    // Regex aprimorada: captura número, tipo (ANO/SERIE/EM) e letra final (A-H)
+    // Exemplos suportados: "7ANO E", "7 ANO E", "7ANOE", "6SERIE C", "1EM A"
+    const match = s.match(/^(\d+)\s*(ANO|SERIE|EM)?\s*([A-H])?$/);
 
     if (match) {
         const num = match[1];
