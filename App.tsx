@@ -258,6 +258,14 @@ const App = () => {
       if (finalStudents.length === 0) {
         finalStudents = STUDENTS_DB;
         console.log(`⚠️ Local: Usando ${STUDENTS_DB.length} alunos (studentsData.ts)`);
+      } else {
+        // Mescla alunos do banco local para turmas que não vieram do Supabase/Sheets
+        const turmasCarregadas = new Set(finalStudents.map(s => s.turma));
+        const alunosFaltando = STUDENTS_DB.filter(s => !turmasCarregadas.has(s.turma));
+        if (alunosFaltando.length > 0) {
+          console.log(`⚠️ Mesclando ${alunosFaltando.length} alunos de turmas faltantes do banco local`);
+          finalStudents = [...finalStudents, ...alunosFaltando];
+        }
       }
 
       setStudents(finalStudents);
@@ -266,8 +274,10 @@ const App = () => {
       const fromStudents = finalStudents.map(s => s.turma);
       const fromSheetsRaw: string[] = (window as any).__allDetectedClasses || [];
       const fromSheets = fromSheetsRaw.map(t => normalizeClassName(t));
+      // GARANTE que turmas do banco local (studentsData.ts) sempre apareçam
+      const fromLocalDB = STUDENTS_DB.map(s => s.turma);
 
-      const uniqueClasses = Array.from(new Set([...fromStudents, ...fromSheets]))
+      const uniqueClasses = Array.from(new Set([...fromStudents, ...fromSheets, ...fromLocalDB]))
         .filter(t => t !== '---'); // Remove placeholders
       const sortedClasses = uniqueClasses.sort((a, b) => {
         const getOrder = (s: string) => {
