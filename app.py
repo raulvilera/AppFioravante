@@ -238,6 +238,10 @@ async def signup_page(request: Request):
 async def profissional_page(request: Request):
     return templates.TemplateResponse("profissional.html", {"request": request})
 
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request})
+
 @app.get("/cadastro-empresa", response_class=HTMLResponse)
 async def cadastro_empresa_page(request: Request):
     return templates.TemplateResponse("cadastro_empresa.html", {"request": request})
@@ -246,31 +250,84 @@ async def cadastro_empresa_page(request: Request):
 async def registrar_empresa(
     cnpj: str = Form(...),
     nome: str = Form(...),
-    telefone: str = Form(...),
-    responsavel: str = Form(...),
-    colaboradores: int = Form(...),
-    setores: str = Form(...) # String separada por vírgulas ou JSON
+    email: str = Form(""),
+    telefone: str = Form(""),
+    responsavel: str = Form(""),
+    colaboradores: int = Form(0),
+    num_setores: int = Form(0),
+    setores: str = Form(""),
+    empresa_id: int = Form(None),
 ):
-    # Lógica para salvar os dados da empresa e vincular ao usuário
-    # Por enquanto, apenas retornamos sucesso para o protótipo
-    return {"success": True, "message": "Dados da empresa salvos com sucesso!"}
+    """Registra/atualiza os dados completos da empresa. Chamado no primeiro acesso do RH."""
+    try:
+        dados = {
+            "cnpj": cnpj,
+            "nome": nome,
+            "email": email,
+            "telefone": telefone,
+            "responsavel": responsavel,
+            "num_colaboradores": colaboradores,
+            "num_setores": num_setores,
+            "setores": setores,
+            "setor_principal": setores.split(",")[0].strip() if setores else "",
+            "ativo": True,
+        }
+        if empresa_id:
+            # Atualiza empresa existente
+            await sb_patch("empresas", empresa_id, dados)
+            return {"success": True, "message": "Dados da empresa atualizados!", "redirect": "/"}
+        else:
+            # Cria nova empresa
+            nova = await sb_post("empresas", dados)
+            return {"success": True, "message": "Empresa cadastrada com sucesso!", "redirect": "/", "empresa_id": nova.get("id")}
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao salvar empresa: {str(e)}"}
 
 @app.post("/api/auth/login")
 async def api_login(email: str = Form(...), password: str = Form(...)):
-    # Lógica de login com Supabase Auth ou tabela users
-    
-    # Exceção Hardcoded para Carmen (conforme solicitado pelo usuário)
-    if email == "carmensantanapsico@gmail.com" and password == "Ca817725@":
-        return {"success": True, "redirect": "/profissional"}
+    """
+    Login unificado com suporte a:
+    - Admin da plataforma (consultoria técnica)
+    - Profissional psicossocial (Carmen)
+    - RH das empresas (primeiro acesso → cadastro da empresa)
+    """
 
+    # ── ADMIN DA PLATAFORMA (Consultoria Técnica) ────────────────────────────
+    if email == "admin@psicossocial.pro" and password == "PsicoPRO@2025!":
+        return {"success": True, "redirect": "/admin", "role": "admin"}
+
+    # ── PROFISSIONAL PSICOSSOCIAL ────────────────────────────────────────────
+    if email == "carmensantanapsico@gmail.com" and password == "Ca817725@":
+        return {"success": True, "redirect": "/profissional", "role": "profissional"}
+
+    # ── USUÁRIOS RH DAS EMPRESAS ─────────────────────────────────────────────
     try:
         users = await sb_get("users", {"email": f"eq.{email}", "password": f"eq.{password}"})
-        if users:
-            # Por padrão, usuários comuns vão para o dashboard de RH (/)
-            return {"success": True, "redirect": "/"}
-        return {"success": False, "message": "Email ou senha incorretos."}
-    except Exception:
-        return {"success": False, "message": "Erro ao processar login."}
+        if not users:
+            return {"success": False, "message": "E-mail ou senha incorretos."}
+
+        user = users[0]
+        empresa_id = user.get("empresa_id")
+
+        # Verificar se a empresa já tem cadastro completo
+        if empresa_id:
+            empresas = await sb_get("empresas", {"id": f"eq.{empresa_id}", "select": "id,nome,cnpj"})
+            empresa = empresas[0] if empresas else None
+
+            # Primeiro acesso: empresa sem dados → redirecionar para cadastro
+            if not empresa or not empresa.get("cnpj"):
+                return {
+                    "success": True,
+                    "redirect": f"/cadastro-empresa?empresa_id={empresa_id}&primeiro_acesso=true",
+                    "role": "rh",
+                    "primeiro_acesso": True
+                }
+
+        return {"success": True, "redirect": "/", "role": "rh"}
+
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao processar login: {str(e)}"}
+
 
 @app.post("/api/auth/signup")
 async def api_signup(
@@ -279,17 +336,13 @@ async def api_signup(
     password: str = Form(...),
     empresa_id: int = Form(...)
 ):
-    # Validação de e-mail corporativo (exemplo: @empresa.com.br)
-    # Exceção para o e-mail da Carmen
-    if not email.endswith("@empresa.com.br") and email != "carmensantanapsico@gmail.com":
-        return {"success": False, "message": "Apenas e-mails corporativos (@empresa.com.br) são permitidos."}
-    
+    """Cadastro de novo usuário RH vinculado a uma empresa."""
     try:
         # Verificar se usuário já existe
         existing = await sb_get("users", {"email": f"eq.{email}"})
         if existing:
             return {"success": False, "message": "E-mail já cadastrado."}
-        
+
         # Inserir novo usuário
         await sb_post("users", {
             "nome": nome,
@@ -298,7 +351,7 @@ async def api_signup(
             "empresa_id": empresa_id,
             "ativo": True
         })
-        return {"success": True, "message": "Cadastro realizado com sucesso! Aguarde a confirmação."}
+        return {"success": True, "message": "Cadastro realizado com sucesso!"}
     except Exception as e:
         return {"success": False, "message": f"Erro ao realizar cadastro: {str(e)}"}
 
