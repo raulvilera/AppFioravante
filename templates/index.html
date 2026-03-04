@@ -1948,11 +1948,14 @@
       clearScene(id);
       const cont = document.getElementById(id);
       if (!cont) return;
-      const W = cont.offsetWidth || 200, H = cont.offsetHeight || 200;
+      let W = cont.offsetWidth, H = cont.offsetHeight;
+      if (!H) H = parseInt(cont.style.height) || 220;
+      if (!W) W = cont.parentElement ? cont.parentElement.offsetWidth : 220;
+      if (W < 10 || H < 10) { setTimeout(function () { donut3d(id, labels, values, colors); }, 250); return; }
       const scene = new THREE.Scene();
       const cam = new THREE.PerspectiveCamera(40, W / H, 0.1, 50);
       cam.position.set(0, 2.8, 5.2); cam.lookAt(0, 0.1, 0);
-      const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       ren.setSize(W, H); ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       ren.shadowMap.enabled = true; ren.shadowMap.type = THREE.PCFSoftShadowMap;
       cont.appendChild(ren.domElement);
@@ -1992,11 +1995,11 @@
         grp.add(mesh); sa += ang;
       });
 
-      // Plano de sombra no chão — dá efeito de alto relevo
-      const floorGeo = new THREE.CircleGeometry(1.4, 64);
-      const floorMat = new THREE.ShadowMaterial({ opacity: 0.35 });
+      // Plano base escuro dá profundidade
+      const floorGeo = new THREE.CircleGeometry(1.4, 48);
+      const floorMat = new THREE.MeshPhongMaterial({ color: 0x050a14, transparent: true, opacity: 0.5, shininess: 0 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2; floor.position.y = -0.25; floor.receiveShadow = true;
+      floor.rotation.x = -Math.PI / 2; floor.position.y = -0.22;
       scene.add(floor);
 
       // legenda
@@ -2020,11 +2023,14 @@
       clearScene(id);
       const cont = document.getElementById(id);
       if (!cont) return;
-      const W = cont.offsetWidth || 300, H = cont.offsetHeight || 200;
+      let W = cont.offsetWidth, H = cont.offsetHeight;
+      if (!H) H = parseInt(cont.style.height) || 220;
+      if (!W) W = cont.parentElement ? cont.parentElement.offsetWidth : 300;
+      if (W < 10 || H < 10) { setTimeout(function () { bar3d(id, labels, values, colors); }, 250); return; }
       const scene = new THREE.Scene();
       const cam = new THREE.PerspectiveCamera(36, W / H, 0.1, 60);
       cam.position.set(0, 4.2, 10); cam.lookAt(0, 1.0, 0);
-      const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      const ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       ren.setSize(W, H); ren.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       ren.shadowMap.enabled = true; ren.shadowMap.type = THREE.PCFSoftShadowMap;
       cont.appendChild(ren.domElement);
@@ -2094,13 +2100,13 @@
       const base = new THREE.Mesh(baseG, baseM);
       base.position.set(0, -0.04, 0); base.receiveShadow = true; grp.add(base);
 
-      // Plano de sombra projetada (alto relevo)
-      const shadowPlane = new THREE.Mesh(
+      // Sem ShadowMaterial (r128) — usa plano de cor para efeito de base
+      const sPlane = new THREE.Mesh(
         new THREE.PlaneGeometry(totalW + 2, 4),
-        new THREE.ShadowMaterial({ opacity: 0.4 })
+        new THREE.MeshPhongMaterial({ color: 0x030710, transparent: true, opacity: 0.45, shininess: 0 })
       );
-      shadowPlane.rotation.x = -Math.PI / 2; shadowPlane.position.y = -0.09; shadowPlane.receiveShadow = true;
-      scene.add(shadowPlane);
+      sPlane.rotation.x = -Math.PI / 2; sPlane.position.y = -0.085;
+      scene.add(sPlane);
 
       let t = 0;
       function anim() {
