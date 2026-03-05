@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -610,8 +610,8 @@
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-badge">🧠 Psicos</div>
-      <h2>Painel\u003cbr\u003e\u003cem\u003eProfissional\u003c/em\u003e</h2>
-      <div class="sidebar-sub">Área Profissional</div>
+      <h2>Painel<br><em>Profissional</em></h2>
+      <div class="sidebar-sub">Área Restrita</div>
     </div>
 
     <div class="nav-section">Principal</div>
@@ -647,7 +647,7 @@
   <div class="main">
     <div class="topbar">
       <div class="topbar-title" id="topTitle">PAINEL PROFISSIONAL</div>
-      <div class="perfil-badge">🧠 Psicosistrador</div>
+      <div class="perfil-badge">🧠 Profissional</div>
       <button class="btn-topbar" onclick="loadAll()">&#8635; Atualizar Tudo</button>
     </div>
 
@@ -784,7 +784,7 @@
             <div class="page-title">Usuários do Sistema</div>
             <div class="page-sub">Contas de acesso à plataforma</div>
           </div>
-          <button class="btn-add" onclick="window.location.href="/signup"">+ Novo Usuário</button>
+          <button class="btn-add" onclick="window.location.href='/signup'">+ Novo Usuário</button>
         </div>
         <div class="info-grid">
           <div class="info-card">
@@ -992,7 +992,7 @@
       document.getElementById('sec-' + name).classList.add('active');
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       if (el) el.classList.add('active');
-      const T = { overview: 'PAINEL PROFISSIONAL', empresas: 'GERENCIAR EMPRESAS', usuarios: 'USUÁRIOS DO SISTEMA' };
+      const T = { overview: 'PAINEL ADMINISTRATIVO', empresas: 'GERENCIAR EMPRESAS', usuarios: 'USUÁRIOS DO SISTEMA' };
       document.getElementById('topTitle').textContent = T[name] || name;
       if (name === 'empresas') {
         const labels = allEmpresas.map(e => e.nome.substring(0, 10));
@@ -1007,4 +1007,3 @@
 </body>
 
 </html>
-
