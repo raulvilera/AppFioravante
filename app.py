@@ -386,11 +386,17 @@ async def api_login(email: str = Form(...), password: str = Form(...)):
 
     # ── USUÁRIOS RH DAS EMPRESAS ─────────────────────────────────────────────
     try:
-        users = await sb_get("users", {"email": f"eq.{email}", "password": f"eq.{password}"})
+        # Busca apenas por e-mail (filtrar por password causa 400 no Supabase)
+        users = await sb_get("users", {"email": f"eq.{email}", "select": "*"})
         if not users:
             return {"success": False, "message": "E-mail ou senha incorretos."}
 
         user = users[0]
+
+        # Verificar senha no Python
+        if user.get("password") != password:
+            return {"success": False, "message": "E-mail ou senha incorretos."}
+
         empresa_id = user.get("empresa_id")
 
         # Verificar se a empresa já tem cadastro completo
