@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # ─── App Setup ────────────────────────────────────────────────────────────────
-app = FastAPI(title="Psico Pro", version="3.5.0-FORCE")
+app = FastAPI(title="Psico Pro", version="3.5.0")
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -221,10 +221,9 @@ Documento gerado automaticamente — SESMT PRO v3.0
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return "SISTEMA ATUALIZADO v3.5.1 - SE VOCE VE ISSO, O SERVIDOR ESTA FUNCIONANDO"
-
+    return RedirectResponse(url="/login", status_code=302)
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def index(request: Request):
@@ -274,7 +273,6 @@ async def registrar_empresa(
     setores: str = Form(""),
     empresa_id: int = Form(None),
 ):
-    """Registra/atualiza os dados completos da empresa. Chamado no primeiro acesso do RH."""
     try:
         dados = {
             "cnpj": cnpj,
@@ -289,11 +287,9 @@ async def registrar_empresa(
             "ativo": True,
         }
         if empresa_id:
-            # Atualiza empresa existente
             await sb_patch("empresas", empresa_id, dados)
             return {"success": True, "message": "Dados da empresa atualizados!", "redirect": "/"}
         else:
-            # Cria nova empresa
             nova = await sb_post("empresas", dados)
             return {"success": True, "message": "Empresa cadastrada com sucesso!", "redirect": "/", "empresa_id": nova.get("id")}
     except Exception as e:
@@ -306,7 +302,6 @@ async def assinar_plano(
     periodo: str = Form(...),
     valor: float = Form(...),
 ):
-    """Registra a assinatura do plano escolhido pela empresa."""
     try:
         dados_assinatura = {
             "plano": plano,
@@ -323,9 +318,8 @@ async def assinar_plano(
 @app.post("/api/setores/registrar-links")
 async def registrar_links_setores(
     empresa_id: int = Form(None),
-    links: str = Form(...),  # JSON string com lista [{setor, token, link}]
+    links: str = Form(...),
 ):
-    """Salva no Supabase um token único por setor para rastreamento do formulário."""
     import json
     try:
         lista = json.loads(links)
@@ -343,13 +337,8 @@ async def registrar_links_setores(
 
 @app.get("/api/setores/por-empresa")
 async def setores_por_empresa(empresa_id: int = None, token: str = None):
-    """
-    Retorna os setores cadastrados de uma empresa.
-    Pode ser buscado por empresa_id direto, ou por token (do link enviado ao setor).
-    """
     try:
         if token and not empresa_id:
-            # Buscar empresa_id pelo token do link
             links = await sb_get("setor_links", {"token": f"eq.{token}"})
             if links:
                 empresa_id = links[0].get("empresa_id")
@@ -357,11 +346,9 @@ async def setores_por_empresa(empresa_id: int = None, token: str = None):
         if not empresa_id:
             return {"success": False, "setores": [], "message": "empresa_id não encontrado."}
 
-        # Buscar todos os setores da empresa
         links = await sb_get("setor_links", {"empresa_id": f"eq.{empresa_id}", "ativo": "eq.true"})
         setores = [l.get("setor") for l in links if l.get("setor")]
 
-        # Fallback: buscar da tabela empresas se nenhum link salvo
         if not setores:
             empresas = await sb_get("empresas", {"id": f"eq.{empresa_id}"})
             if empresas and empresas[0].get("setores"):
@@ -377,42 +364,28 @@ async def setores_por_empresa(empresa_id: int = None, token: str = None):
 
 @app.post("/api/auth/login")
 async def api_login(email: str = Form(...), password: str = Form(...)):
-    """
-    Login unificado com suporte a:
-    - Admin da plataforma (consultoria técnica)
-    - Profissional psicossocial (Carmen)
-    - RH das empresas (primeiro acesso → cadastro da empresa)
-    """
-
-    # ── ADMIN DA PLATAFORMA (Consultoria Técnica) ────────────────────────────
     if email == "admin@psicossocial.pro" and password == "PsicoPRO@2025!":
         return {"success": True, "redirect": "/admin", "role": "admin"}
 
-    # ── PROFISSIONAL PSICOSSOCIAL ────────────────────────────────────────────
     if email == "carmensantanapsico@gmail.com" and password == "Ca817725@":
         return {"success": True, "redirect": "/profissional", "role": "profissional"}
 
-    # ── USUÁRIOS RH DAS EMPRESAS ─────────────────────────────────────────────
     try:
-        # Busca apenas por e-mail (filtrar por password causa 400 no Supabase)
         users = await sb_get("users", {"email": f"eq.{email}", "select": "*"})
         if not users:
             return {"success": False, "message": "E-mail ou senha incorretos."}
 
         user = users[0]
 
-        # Verificar senha no Python
         if user.get("password") != password:
             return {"success": False, "message": "E-mail ou senha incorretos."}
 
         empresa_id = user.get("empresa_id")
 
-        # Verificar se a empresa já tem cadastro completo
         if empresa_id:
             empresas = await sb_get("empresas", {"id": f"eq.{empresa_id}", "select": "id,nome,cnpj"})
             empresa = empresas[0] if empresas else None
 
-            # Primeiro acesso: empresa sem dados → redirecionar para cadastro
             if not empresa or not empresa.get("cnpj"):
                 return {
                     "success": True,
@@ -434,9 +407,7 @@ async def api_signup(
     password: str = Form(...),
     empresa_id: int = Form(...)
 ):
-    """Cadastro de novo usuário RH vinculado a uma empresa."""
     try:
-        # Inserir diretamente (RLS bloqueia consulta prévia; constraint unique de email garante unicidade)
         await sb_post("users", {
             "nome": nome,
             "email": email,
@@ -691,4 +662,3 @@ if __name__ == "__main__":
     print("  🌐 Acesse: http://localhost:8000")
     print("=" * 55 + "\n")
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
-
