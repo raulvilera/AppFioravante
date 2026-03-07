@@ -226,9 +226,10 @@ Documento gerado automaticamente — SESMT PRO v3.0
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    return RedirectResponse(url="/login")
+@app.get("/")
+async def root():
+    return "SISTEMA ATUALIZADO v3.5.1 - SE VOCE VE ISSO, O SERVIDOR ESTA FUNCIONANDO"
+
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def index(request: Request):
