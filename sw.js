@@ -1,7 +1,8 @@
 const CACHE_NAME = 'psicos-v3.6.2';
 const ASSETS = [
+    '/',
     '/login',
-    '/api/version'
+    '/static/app_icon.png'
 ];
 
 self.addEventListener('install', (e) => {
