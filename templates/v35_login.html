@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — Psicos v3.5.0</title>
+  <title>Login — Psicos v3.6.2</title>
   <meta name="theme-color" content="#0077ff">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/static/app_icon.png">
@@ -322,7 +322,7 @@
   <div class="bg-grid"></div>
   <div class="card">
     <div class="logo-wrap">
-      <h1>PSICOS <span style="font-size:10px; color:var(--muted); vertical-align:middle;">v3.5.0</span></h1>
+      <h1>PSICOS <span style="font-size:10px; color:var(--muted); vertical-align:middle;">v3.6.2</span></h1>
       <p class="subtitle">Bem-vindo. Entre com suas credenciais.</p>
     </div>
     <div class="msg" id="msg"></div>
@@ -354,6 +354,12 @@
       <button type="submit" class="btn-primary">ENTRAR</button>
     </form>
     <p class="signup-link">Não tem uma conta? <a href="/signup">Criar conta</a></p>
+    <div id="installContainer" style="display:none; text-align:center; margin-top:15px;">
+      <button onclick="installPWA()"
+        style="background:transparent; border:1px solid #00ccff; color:#00ccff; padding:8px 15px; border-radius:10px; font-size:12px; cursor:pointer; font-weight:700;">
+        📲 INSTALAR APLICATIVO (VERSÃO APP)
+      </button>
+    </div>
   </div>
   <script>
     function togglePw() { const pw = document.getElementById('password'); pw.type = pw.type === 'password' ? 'text' : 'password' }
@@ -368,6 +374,24 @@
       clearTimeout(window._toastTimer);
       window._toastTimer = setTimeout(() => { toast.style.display = 'none' }, 3000);
     }
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installContainer').style.display = 'block';
+    });
+
+    async function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          document.getElementById('installContainer').style.display = 'none';
+        }
+        deferredPrompt = null;
+      }
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
