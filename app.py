@@ -414,26 +414,68 @@ async def api_login(email: str = Form(...), password: str = Form(...)):
         return {"success": False, "message": f"Erro ao processar login: {str(e)}"}
 
 
+@app.get("/api/auth/next-empresa-id")
+async def get_next_empresa_id():
+    """Retorna o próximo ID disponível para empresa."""
+    try:
+        # Busca a empresa com maior ID
+        empresas = await sb_get("empresas", {"select": "id", "order": "id.desc", "limit": "1"})
+        next_id = 1
+        if empresas:
+            next_id = empresas[0]["id"] + 1
+        return {"success": True, "next_id": next_id}
+    except Exception as e:
+        # Se der erro ou a tabela estiver vazia, retorna 1 como padrão seguro
+        return {"success": True, "next_id": 1}
+
+
 @app.post("/api/auth/signup")
 async def api_signup(
     nome: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-    empresa_id: int = Form(...)
+    empresa_id: int = Form(...),
+    setores_data: Optional[str] = Form(None)  # JSON string com setores e funcionários
 ):
     try:
+        # 1. Verifica se a empresa já existe no cadastro de empresas, se não, cria uma básica
+        # Isso garante que o empresa_id seja válido se o usuário estiver criando uma nova empresa no signup
+        existente = await sb_get("empresas", {"id": f"eq.{empresa_id}"})
+        
+        if not existente:
+            # Cria a empresa básica com os setores fornecidos
+            import json
+            setores_str = ""
+            total_colab = 0
+            if setores_data:
+                try:
+                    data = json.loads(setores_data)
+                    setores_str = ", ".join([s["setor"] for s in data])
+                    total_colab = sum([int(s["funcionarios"]) for s in data])
+                except: pass
+
+            await sb_post("empresas", {
+                "id": empresa_id,
+                "nome": nome, # Nome da empresa vindo do campo renomeado
+                "setores": setores_str,
+                "num_colaboradores": total_colab,
+                "ativo": True
+            })
+
+        # 2. Cria o usuário vinculado ao ID
         await sb_post("users", {
             "nome": nome,
             "email": email,
             "password": password,
             "empresa_id": empresa_id,
+            "role": "rh", # Padrão para quem se cadastra
             "ativo": True
         })
         return {"success": True, "message": "Cadastro realizado com sucesso!"}
     except Exception as e:
         err = str(e).lower()
         if "duplicate" in err or "unique" in err or "23505" in err:
-            return {"success": False, "message": "E-mail já cadastrado. Faça login."}
+            return {"success": False, "message": "E-mail ou ID de Empresa já cadastrado."}
         return {"success": False, "message": f"Erro ao realizar cadastro: {str(e)}"}
 
 # ── Empresas
