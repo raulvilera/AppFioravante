@@ -832,6 +832,14 @@
   </div>
 
   <script>
+    // ── TRATAMENTO DE ERROS GLOBAL ──
+    window.onerror = function (msg, url, line) {
+      const errDiv = document.createElement('div');
+      errDiv.style = "position:fixed;top:0;left:0;width:100%;background:rgba(255,0,0,0.9);color:white;padding:10px;z-index:10000;font-family:sans-serif;font-size:12px;";
+      errDiv.innerHTML = `<b>Erro de Sistema:</b> ${msg} <br> <small>Linha: ${line} | ${url}</small>`;
+      document.body.appendChild(errDiv);
+    };
+
     // ── ESTADO ──
     let renderers = {}, scenes = {}, animIds = {};
     let allEmpresas = [], allDash = [];
@@ -848,6 +856,10 @@
 
     // DONUT 3D
     function donut3d(id, labels, values, colors) {
+      if (typeof THREE === 'undefined') {
+        console.error('Three.js não carregado.');
+        return;
+      }
       clearScene(id);
       const cont = document.getElementById(id); if (!cont) return;
       const W = cont.offsetWidth || 180, H = cont.offsetHeight || 180;
@@ -887,6 +899,7 @@
 
     // BARRAS 3D VERTICAIS
     function bar3d(id, labels, values, colors) {
+      if (typeof THREE === 'undefined') return;
       clearScene(id);
       const cont = document.getElementById(id); if (!cont) return;
       const W = cont.offsetWidth || 300, H = cont.offsetHeight || 200;
