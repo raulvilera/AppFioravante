@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # ─── App Setup ────────────────────────────────────────────────────────────────
-app = FastAPI(title="Psico Pro", version="3.6.2")
+app = FastAPI(title="Psico Pro", version="3.6.3")
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -228,17 +228,17 @@ async def root(request: Request):
 @app.get("/manifest.json")
 async def get_manifest():
     from fastapi.responses import FileResponse
-    return FileResponse("manifest.json")
+    return FileResponse("manifest.json", media_type="application/manifest+json", headers={"Cache-Control": "no-cache"})
 
 @app.get("/sw.js")
 async def get_sw():
     from fastapi.responses import FileResponse
-    return FileResponse("sw.js")
+    return FileResponse("sw.js", media_type="application/javascript", headers={"Cache-Control": "no-cache"})
 
 @app.get("/static/app_icon.png")
 async def get_icon():
     from fastapi.responses import FileResponse
-    return FileResponse("static/app_icon.png")
+    return FileResponse("static/app_icon.png", media_type="image/png")
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def index(request: Request):
