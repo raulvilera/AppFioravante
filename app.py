@@ -222,8 +222,23 @@ Documento gerado automaticamente — SESMT PRO v3.0
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
-async def root():
-    return RedirectResponse(url="/login", status_code=302)
+async def root(request: Request):
+    return RedirectResponse(url="/login")
+
+@app.get("/manifest.json")
+async def get_manifest():
+    from fastapi.responses import FileResponse
+    return FileResponse("manifest.json")
+
+@app.get("/sw.js")
+async def get_sw():
+    from fastapi.responses import FileResponse
+    return FileResponse("sw.js")
+
+@app.get("/static/app_icon.png")
+async def get_icon():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/app_icon.png")
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def index(request: Request):

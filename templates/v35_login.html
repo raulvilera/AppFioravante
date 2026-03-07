@@ -5,6 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — Psicos v3.5.0</title>
+  <meta name="theme-color" content="#0077ff">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/static/app_icon.png">
   <link
     href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap"
     rel="stylesheet">
@@ -365,24 +368,30 @@
       clearTimeout(window._toastTimer);
       window._toastTimer = setTimeout(() => { toast.style.display = 'none' }, 3000);
     }
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+    }
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+        e.preventDefault();
       const btn = e.target.querySelector('button[type=submit]');
       btn.textContent = 'VERIFICANDO...'; btn.disabled = true;
       const fd = new FormData();
       fd.append('email', document.getElementById('email').value);
       fd.append('password', document.getElementById('password').value);
-      const res = await fetch('/api/auth/login', { method: 'POST', body: fd });
+      const res = await fetch('/api/auth/login', {method: 'POST', body: fd });
       const data = await res.json();
       const msg = document.getElementById('msg');
       if (data.success) {
         msg.className = 'msg success'; msg.style.display = 'block';
-        msg.textContent = '✓ Acesso autorizado! Redirecionando...';
+      msg.textContent = '✓ Acesso autorizado! Redirecionando...';
         setTimeout(() => window.location.href = data.redirect || '/dashboard', 1000);
       } else {
         msg.className = 'msg error'; msg.style.display = 'block';
-        msg.textContent = '✗ ' + (data.message || 'Credenciais inválidas.');
-        btn.textContent = 'ENTRAR'; btn.disabled = false;
+      msg.textContent = '✗ ' + (data.message || 'Credenciais inválidas.');
+      btn.textContent = 'ENTRAR'; btn.disabled = false;
       }
     });
   </script>
