@@ -16,7 +16,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # ─── App Setup ────────────────────────────────────────────────────────────────
-app = FastAPI(title="Psico Pro", version="3.2.0")
+app = FastAPI(title="Psico Pro", version="3.5.0-FORCE")
+
+@app.get("/api/version")
+async def get_version():
+    return {"version": "3.5.0", "build_time": "2026-03-07 06:55", "status": "FORCE_DEPLOY"}
+
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -227,11 +232,11 @@ async def root(request: Request):
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("main_dashboard.html", {"request": request})
+    return templates.TemplateResponse("v35_dashboard.html", {"request": request})
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("v35_login.html", {"request": request})
 
 @app.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request):
@@ -239,15 +244,15 @@ async def signup_page(request: Request):
 
 @app.get("/profissional", response_class=HTMLResponse)
 async def profissional_page(request: Request):
-    return templates.TemplateResponse("profissional.html", {"request": request})
+    return templates.TemplateResponse("v35_profissional.html", {"request": request})
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request):
-    return templates.TemplateResponse("admin.html", {"request": request})
+    return templates.TemplateResponse("v35_admin.html", {"request": request})
 
 @app.get("/rh", response_class=HTMLResponse)
 async def rh_page(request: Request):
-    return templates.TemplateResponse("rh.html", {"request": request})
+    return templates.TemplateResponse("v35_rh.html", {"request": request})
 
 @app.get("/planos", response_class=HTMLResponse)
 async def planos_page(request: Request):
