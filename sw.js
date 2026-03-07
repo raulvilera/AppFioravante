@@ -1,4 +1,4 @@
-const CACHE_NAME = 'psicos-v3.6.1';
+const CACHE_NAME = 'psicos-v3.6.2';
 const ASSETS = [
     '/login',
     '/api/version'
