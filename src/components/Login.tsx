@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LISTA_PROFESSORES } from '../data/professorsData';
 
 interface LoginProps {
     onLogin: (email: string) => void;
@@ -9,17 +10,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const validateEmail = (email: string) => {
-        const re = /^[a-zA-Z0-9._%+-]+@(prof\.educacao\.sp\.gov\.br|professor\.educacao\.sp\.gov\.br)$/;
-        return re.test(String(email).toLowerCase());
+    const isProfessorAuthorized = (email: string) => {
+        return LISTA_PROFESSORES.some(prof =>
+            prof.emails.some(e => e.toLowerCase() === email.toLowerCase())
+        );
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (!validateEmail(email)) {
-            setError('Por favor, use um e-mail institucional @prof ou @professor.');
+        const lowerEmail = email.toLowerCase();
+
+        if (!isProfessorAuthorized(lowerEmail)) {
+            setError('E-mail institucional não autorizado ou não encontrado na lista oficial.');
             return;
         }
 
@@ -28,8 +32,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             return;
         }
 
-        // No futuro, aqui faremos a autenticação real
-        onLogin(email);
+        // Sucesso no login
+        onLogin(lowerEmail);
     };
 
     return (
