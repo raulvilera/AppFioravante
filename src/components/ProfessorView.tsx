@@ -104,7 +104,7 @@ const ProfessorView: React.FC<ProfessorViewProps> = ({ user, onLogout, onSwitchT
     };
 
     return (
-        <div className="app-container">
+        <div className="min-h-screen bg-gradient-to-br from-black via-[#000d1a] to-[#001a35] font-sans pb-12">
             <header className="professor-header">
                 <div className="header-info">
                     <h2>AREA DO PROFESSOR 2026</h2>
