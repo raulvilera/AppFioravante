@@ -257,8 +257,8 @@ const ProfessorView: React.FC<ProfessorViewProps> = ({ user, onLogout, onSwitchT
 
                 {/* Historico do professor */}
                 {showHistory && (
-                    <div style={{ marginTop: '2rem', background: '#004b8d', borderRadius: '1rem', overflow: 'hidden' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', background: '#003a6c' }}>
+                    <div style={{ marginTop: '2rem', background: 'linear-gradient(to right, #000d1a, #002b5c)', borderRadius: '1rem', overflow: 'hidden' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', background: 'linear-gradient(to right, black, #001030, #002b5c)' }}>
                             <span style={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                                 Meu Historico ({myIncidents.length})
                             </span>
@@ -270,7 +270,7 @@ const ProfessorView: React.FC<ProfessorViewProps> = ({ user, onLogout, onSwitchT
                             <div style={{ overflowX: 'auto' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                                     <thead>
-                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: '#003a6c' }}>
+                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(to right, black, #001030, #002b5c)' }}>
                                             {['Data', 'Aluno', 'Turma', 'Irregularidades', 'Status'].map(h => (
                                                 <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', color: '#93c5fd', fontSize: '0.7rem', textTransform: 'uppercase' }}>{h}</th>
                                             ))}
