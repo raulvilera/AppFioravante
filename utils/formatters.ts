@@ -1,46 +1,33 @@
 /**
  * Normaliza o nome da turma vindo de diferentes fontes (Supabase, Sheets, Local)
- * Padroniza para "6ºAno A" ou "1ª Série A"
+ * Para EE Fioravante Iervolino: 1ºA, 1ºB, 2ºA ... 5ºB, AEE D TARDE TEA, etc.
  */
 export const normalizeClassName = (raw: string): string => {
     if (!raw || raw === '---') return '---';
 
-    // Limpeza inicial e remoção de termos de desconsideração
-    let s = raw.toUpperCase()
+    let s = raw.trim()
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-        .replace(/[º°ª]/g, "")           // Remove ordinais
-        .replace(/\(DESCONSIDER.*\)/g, "") // Remove (desconsidera), (desconsidere), etc.
-        .replace(/\s+/g, " ")            // Remove espaços duplos
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\(DESCONSIDER.*\)/gi, '')
+        .replace(/\s+/g, ' ')
         .trim();
 
-    // Correções de typos específicos e normalização de espaços
-    // Garante que "3SEIE" ou "3 SEIE" virem "3 SERIE"
-    s = s.replace(/3\s*SEIE/g, "3 SERIE")
-        .replace(/2\s*SEROIE/g, "2 SERIE")
-        .replace(/1\s*SR/g, "1 SERIE")
-        .replace(/SERIE/g, " SERIE ")
-        .replace(/ANO/g, " ANO ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    // Regex robusta: captura número, tipo e letra
-    const match = s.match(/^(\d+)\s*(ANO|SERIE|EM)?\s*([A-Z])?$/);
-
-    if (match) {
-        const num = match[1];
-        let type = match[2] || (parseInt(num) <= 3 ? 'SERIE' : 'ANO');
-        if (type === 'EM') type = 'SERIE';
-        const letter = match[3] || '';
-
-        // Regra: 1-3 SERIE -> Xª SÉRIE Y
-        if (num === '1' || num === '2' || num === '3') {
-            return `${num}ª SÉRIE ${letter}`.trim().toUpperCase();
-        }
-        // Regra: 6-9 ANO -> XºANO Y
-        return `${num}ºANO ${letter}`.trim().toUpperCase();
+    // Turmas AEE — preservar como estão (ex: "AEE D TARDE TEA")
+    if (/^AEE/i.test(s)) {
+        return s.toUpperCase().trim();
     }
 
-    // Fallback: Retorna o original limpo
+    // Captura padrão: número + letra (ex: "1A", "1 A", "1ºA", "1º A", "1ª A")
+    const match = s.match(/^(\d+)\s*[oOaAºª°]?\s*([A-Za-z])$/);
+    if (match) {
+        return `${match[1]}º${match[2].toUpperCase()}`;
+    }
+
+    // Já no formato correto (ex: "1ºA")
+    const alreadyFormatted = raw.match(/^(\d+)[º°ª]\s*([A-Za-z])$/);
+    if (alreadyFormatted) {
+        return `${alreadyFormatted[1]}º${alreadyFormatted[2].toUpperCase()}`;
+    }
+
     return raw.trim();
 };
