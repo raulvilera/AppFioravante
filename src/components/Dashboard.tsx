@@ -41,10 +41,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToProfess
     const countByStatus = (status: string) => incidents.filter(i => i.status === status).length;
 
     return (
-        <div className="app-container">
+        <div className="min-h-screen bg-gradient-to-br from-black via-[#000d1a] to-[#001a35] font-sans pb-12 overflow-x-hidden">
             <header className="professor-header">
                 <div className="header-info">
-                    <h2>DASHBOARD DE GESTAO — EE FIORAVANTE IERVOLINO</h2>
+                    <h2>GESTÃO FIORAVANTE IERVOLINO 2026</h2>
                     <p style={{ color: '#fbbf24', fontSize: '0.7rem', fontWeight: 700 }}>MODO GESTOR</p>
                 </div>
                 <div className="user-profile">
@@ -65,7 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToProfess
                         { label: 'EM ANDAMENTO', value: countByStatus('EM ANDAMENTO'), color: '#8b5cf6' },
                     ].map(card => (
                         <div key={card.label} style={{
-                            background: '#004b8d',
+                            background: 'linear-gradient(to bottom right, black, #000d1a, #001a35)',
                             borderRadius: '0.75rem',
                             padding: '1.25rem',
                             borderLeft: `4px solid ${card.color}`,
@@ -110,8 +110,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToProfess
                 </div>
 
                 {/* Tabela */}
-                <div style={{ background: '#004b8d', borderRadius: '1rem', overflow: 'hidden' }}>
-                    <div style={{ padding: '1rem 1.5rem', background: '#003a6c', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <div style={{ background: 'linear-gradient(to bottom right, black, #000d1a, #001a35)', borderRadius: '1rem', overflow: 'hidden' }}>
+                    <div style={{ padding: '1rem 1.5rem', background: 'linear-gradient(to right, black, #002b5c)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                         Registros Disciplinares — {filtered.length} ocorrencia(s)
                     </div>
                     {loading ? (
@@ -122,7 +122,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToProfess
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: '#003a6c' }}>
+                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'linear-gradient(to right, black, #002b5c)' }}>
                                         {['Data', 'Aluno', 'Turma', 'Professor', 'Disciplina', 'Irregularidades', 'Descricao', 'Status'].map(h => (
                                             <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontWeight: 700, color: '#93c5fd', fontSize: '0.7rem', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                                         ))}
@@ -179,3 +179,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onSwitchToProfess
 };
 
 export default Dashboard;
+
+
+
+
+
